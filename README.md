@@ -1,1 +1,6 @@
 # Main README file
+
+Antonia Bulai - 2837920
+David-Valentin Neacsu - 2840781
+Laetitia Maria Rossetti - 2839652
+Goktug Yildirim - 2814081
