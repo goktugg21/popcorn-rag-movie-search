@@ -1,1 +1,3 @@
-### specify files and folders to exclude from version control ###
+__pycache__/
+.vscode/
+.pytest_cache/
