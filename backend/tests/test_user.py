@@ -1,26 +1,24 @@
 import pytest
-from flask import Flask, request
+from users import app
 
 ### first backend tests file ###
 
 ### user tests
 
 @pytest.fixture
-def app():
-    app = Flask(__name__)
+def test_app():
 
     app.config['TESTING'] = True
-
     yield app
 
 @pytest.fixture()
-def client(app):
-    return app.test_client()
+def client(test_app):
+    return test_app.test_client()
 
 
 @pytest.fixture()
-def runner(app):
-    return app.test_cli_runner()
+def runner(test_app):
+    return test_app.test_cli_runner()
 
 def test_register_user(client):
     response = client.post('/register', json={
