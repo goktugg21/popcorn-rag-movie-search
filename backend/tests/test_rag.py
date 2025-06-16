@@ -1,4 +1,3 @@
-
 import os
 import pytest
 from sqlalchemy import create_engine, insert
@@ -12,6 +11,7 @@ from utils.rag_tools import create_index, load_movies_from_csv, getQEngine
 from sqlalchemy import select, delete
 import os
 from sqlalchemy import text
+from app import app
 
 
 @pytest.fixture
@@ -27,7 +27,11 @@ def test_db():
     yield engine
     #Clean up after tests
     with engine.begin() as conn:
-        conn.execute(delete(Movie).where(Movie.imdb_id == "test_node"))    
+        conn.execute(delete(Movie).where(Movie.imdb_id == "test_node"))
+
+@pytest.fixture()
+def test_client():
+    yield app.test_client()
 
 def test_add_movies(test_db):
     """Test adding movies to the database."""
@@ -95,4 +99,15 @@ def test_search_ai():
         assert results is not "Empty response", "Results should not be empty"
     except Exception as e:
         pytest.fail(f"search_ai failed with exception: {e}")
-        
+
+def test_chatEnpoint(test_client):
+    """Test the chat endpoint."""
+    query = "I want to watch a movie about space exploration."
+    response = test_client.post('/chat', json={"query": query})
+    data = response.get_json()
+    assert 'response' in data, "Response should contain 'response' key"
+    assert 'movie_ids' in data, "Response should contain 'movie_ids' key"
+    assert isinstance(data['response'], str), "Response should be a string"
+    assert isinstance(data['movie_ids'], list), "Movie IDs should be a list"
+    assert len(data['movie_ids']) > 0, "Movie IDs list should not be empty"
+    assert data["response"] != "", "Response should not be empty"
