@@ -1,5 +1,5 @@
 import pytest
-from users import app
+from app import app
 
 ### first backend tests file ###
 
@@ -13,8 +13,7 @@ def test_app():
 
 @pytest.fixture()
 def client(test_app):
-    return test_app.test_client()
-
+    yield test_app.test_client()
 
 @pytest.fixture()
 def runner(test_app):
@@ -25,38 +24,36 @@ def test_register_user(client):
         'username' : 'test_user',
         'password' : 'test_password'
     })
+    
     assert response.status_code == 200
     assert response.get_data(as_text=True) == 'User registered successfully'
 
-def test_register_user_existing_username(client):
-    #register a user
-    client.post('/register', json={
-        'username' : 'test_user',
-        'password' : 'test_password'
-    })
 
-    #try to register the same user again
+def test_register_user_existing_username(client):
+
     response = client.post('/register', json={
         'username' : 'test_user',
         'password' : 'test_password'
     })
     
     assert response.status_code == 400
-    assert response.get_data(as_text=True) == 'Username already exists'
+    assert response.get_data(as_text=True) == 'User already exists'
 
 def test_login_user(client):
-    #register a user
-    client.post('/register', json={
-        'username' : 'test_user',
-        'password' : 'test_password'
-    })
-
-    #log in
     response = client.post('/login', json={
         'username' : 'test_user',
         'password' : 'test_password'
     })
     
     assert response.status_code == 200
-    assert response.get_data(as_text=True) == 'User logged in successfully'
+    assert response.get_data(as_text=True) == 'Login successful'
+
+def test_delete_user(client):
+    response = client.post('/delete_account', json={
+        'username' : 'test_user',
+        'password' : 'test_password'
+    })
+    
+    assert response.status_code == 200
+    assert response.get_data(as_text=True) == 'User account deleted successfully'
 
