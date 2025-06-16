@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, request, jsonify
+from flask import Response as FlaskResponse
 import flask
 from models.Base import Base
 from sqlalchemy import create_engine
@@ -6,10 +7,28 @@ from dotenv import load_dotenv
 import os
 from sqlalchemy import text, select
 from models.movieModel import Movie
-from utils.rag_tools import create_index, load_movies_from_csv
+from utils.rag_tools import create_index, load_movies_from_csv, chat, getQEngine
 from sqlalchemy.engine import Engine
+from llama_index.core.base.response.schema import Response
 
 app: Flask = Flask(__name__)
+
+@app.post('/chat')
+def aiSearch() -> FlaskResponse:
+    """
+    Endpoint to handle AI search queries.
+    Returns:
+        Response: A dictionary containing the response of the AI and the movies found.
+    """
+    data = request.get_json()
+    query: str = data.get("query")
+    if query is None or query.strip() == "":
+        return jsonify({"error": "Query cannot be empty"}), 400
+    chat_res: Response = chat(query, getQEngine())
+    chat_res_text = chat_res.response
+    movies_found = [movie.metadata.get("imdb_id") for movie in chat_res.source_nodes]
+    return jsonify({"response": chat_res_text, "movie_ids": movies_found}), 200
+
 
 if __name__ == '__main__':
     load_dotenv()
