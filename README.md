@@ -11,6 +11,8 @@ utils <- Function needed that are not reoutes
 app.py <- main file, from here you start the app and add new routes
 
 .env <- Environmental variables are stored here
+Create .env from .env_example and complete the variables
+
 
 
 Antonia Bulai - 2837920
