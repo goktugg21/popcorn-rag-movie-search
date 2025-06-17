@@ -86,7 +86,7 @@ def login():
     
     # Create JWT token
     token = jwt.encode({
-        'user_id': res.id,
+        'id': res.id,
         'exp': datetime.now(timezone.utc) + timedelta(hours=1)
     }, os.getenv('SECRET_KEY'), algorithm='HS256')
 
@@ -96,11 +96,41 @@ def login():
         token,
         max_age=3600, 
         httponly=True,
-        secure=True,
+        secure=False,
         samesite='Lax'
     )
 
     return response, 200
+
+@app.route('/check_login', methods=['GET'])
+def check_login():
+    token = request.cookies.get('token')
+
+    if not token:
+        return 'Token missing', 401
+    
+    try:
+        decoded = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=['HS256'])
+        id = decoded['id']
+        
+        stmp = select(User).where(User.id==id)
+        connection = engine.connect()
+        res = connection.execute(stmp).first()
+
+        if not res:
+            return 'User not found', 401
+        return f'Logged in as {res.username}', 200
+    
+    except Exception:
+        return 'Invalid or expired token', 401
+    
+@app.route('/logout', methods=['POST'])
+def logout():
+
+    response = make_response('Logged out successfully')
+    response.set_cookie('token', '', expires=0, httponly=True, secure=True, samesite='Lax')
+    return response, 200
+
 
 if __name__ == "__main__":
     app.run(debug=True)
