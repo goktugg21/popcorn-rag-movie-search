@@ -143,9 +143,6 @@ def logout():
     return response, 200
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
-
 @app.post('/chat')
 def aiSearch() -> FlaskResponse:
     """
@@ -167,12 +164,12 @@ if __name__ == '__main__':
     load_dotenv()
     # Create the database engine and initialize the tables
     engine: Engine = create_engine(os.getenv("PG_URL"))
-    Base.metadata.create_all(engine)
 
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:
         connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         connection.commit()
+        Base.metadata.create_all(engine)
         res = connection.execute(select(Movie))
         add_trope("movie","100",connection)
     
