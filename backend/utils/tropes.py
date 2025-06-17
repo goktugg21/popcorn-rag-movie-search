@@ -18,3 +18,4 @@ def add_trope(user_text: str, selected_id: str, connection):
 def trope_filter(session):
     stmt = select(Movie).where(Movie.character_tropes != '').order_by(Movie.id)
     return session.execute(stmt).scalars().all()
+
