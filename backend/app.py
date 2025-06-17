@@ -4,6 +4,9 @@ import flask
 from models.Base import Base
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
+from models.Base import Base
+from utils.tropes import add_trope
+
 import os
 from sqlalchemy import text, select
 from models.movieModel import Movie
@@ -41,6 +44,7 @@ if __name__ == '__main__':
         connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         connection.commit()
         res = connection.execute(select(Movie))
+        add_trope("movie","100",connection)
     
     # If the movies table is empty, create the index and populate the table from the CSV file
     if(res.all() == []):
