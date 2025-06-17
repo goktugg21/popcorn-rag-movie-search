@@ -124,7 +124,7 @@ def check_login():
     except Exception:
         return 'Invalid or expired token', 401
     
-@app.route('/logout', methods=['POST'])
+@app.route('/logout', methods=['GET'])
 def logout():
 
     response = make_response('Logged out successfully')

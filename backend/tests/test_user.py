@@ -72,7 +72,18 @@ def test_check_login(client: FlaskClient):
     assert response._status_code == 200
     assert response.get_data(as_text=True) == 'Logged in as test_user'
 
+def test_logout(client):
+    response = client.get('/logout')
+    
+    assert response.status_code == 200
+    assert response.get_data(as_text=True) == 'Logged out successfully'
+
 def test_delete_user(client):
+    response: Response = client.post('/login', json={
+        'username' : 'test_user',
+        'password' : 'test_password'
+    })
+
     response = client.post('/delete_account', json={
         'username' : 'test_user',
         'password' : 'test_password'
