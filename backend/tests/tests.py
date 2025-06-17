@@ -1,5 +1,5 @@
 ### first backend tests file ###
-from normal_filter_search import genre_filter, year_filter, director_filter, rating_filter, keyword_filter
+from backend.normal_filter_search import genre_filter, year_filter, director_filter, rating_filter, keyword_filter
 
 def test_one_genre_checker():
     """testing single genre filtering functionality"""
