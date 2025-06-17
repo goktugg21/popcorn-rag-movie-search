@@ -1,7 +1,7 @@
 import pytest
 from utils.tropes import add_trope, trope_filter
 from dotenv import load_dotenv
-from sqlalchemy import create_engine,select,order
+from sqlalchemy import create_engine,select
 import os
 from sqlalchemy.orm import Session, sessionmaker
 from backend.models import Movie
