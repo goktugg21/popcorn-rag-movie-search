@@ -4,7 +4,7 @@ from sqlalchemy import update, insert, delete, select
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 from sqlalchemy import MetaData, Table, Column, String, Text, JSON, Float, BigInteger, Date, Integer
-from models.movie import Movie
+from models.movieModel import Movie
 
 def add_trope(user_text: str, selected_id: str, connection):
     stmt = (
