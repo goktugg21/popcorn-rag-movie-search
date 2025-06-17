@@ -24,6 +24,11 @@ from llama_index.core.base.response.schema import Response
 
 app: Flask = Flask(__name__)
 
+load_dotenv()
+# Create the database engine and initialize the tables
+engine: Engine = create_engine(os.getenv("PG_URL"))
+
+
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -161,10 +166,6 @@ def aiSearch() -> FlaskResponse:
 
 
 if __name__ == '__main__':
-    load_dotenv()
-    # Create the database engine and initialize the tables
-    engine: Engine = create_engine(os.getenv("PG_URL"))
-
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:
         connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
