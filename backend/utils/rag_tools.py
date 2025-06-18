@@ -47,11 +47,10 @@ def load_movies_from_csv(csv_path: str) -> list[Document]:
             "vote_count": int(row.get("vote_count") or 0),
             "vote_average": float(row.get("vote_average") or 0),
             "release_year": int(row.get("release_year") or 0),
-            "character_tropes": row.get("character_tropes"),
+            "character_tropes": (row.get("character_tropes") or ""),
             }
             
-            doc_id: str = row.get("\ufeffid")
-
+            doc_id: str = row.get("id")
             documents.append(Document(text=text, metadata=metadata, doc_id=doc_id))
     return documents
   

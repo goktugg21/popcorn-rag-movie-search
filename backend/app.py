@@ -28,6 +28,12 @@ load_dotenv()
 # Create the database engine and initialize the tables
 engine: Engine = create_engine(os.getenv("PG_URL"))
 
+load_dotenv()
+# Create the database engine and initialize the tables
+engine: Engine = create_engine(os.getenv("PG_URL"))
+
+
+
 @app.route('/register', methods=['POST'])
 def register():
     """
@@ -200,6 +206,8 @@ def delete_favourite():
 
 if __name__ == '__main__':
     
+=======
+if __name__ == '__main__':
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:
         connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
