@@ -20,10 +20,10 @@ def engine_add_trope():
         connection.execute(delete(Movie).where(or_(Movie.id == 100002, Movie.id == 100003)))
         connection.commit()
 
-def test_add_trope(enngine_add_trope):
+def test_add_trope(engine_add_trope):
     with engine_add_trope.connect() as connection:
-        assert add_trope("Poor hero","100003",engine_add_trope.connect())
-        assert add_trope("Rebel","100002",engine_add_trope.connect())
+        assert add_trope("Poor hero",100003,engine_add_trope.connect())
+        assert add_trope("Rebel",100002,engine_add_trope.connect())
         results = engine_add_trope.execute(select(Movie).order_by(Movie.id)).fetchall()
         assert results[0]["character_tropes"] == "Poor hero"
         assert results[1]["character_tropes"] == "Rebel"
