@@ -33,7 +33,7 @@ ollama pull mistral-nemo:latest
 ollama pull nomic-embed-text:latest
 ```
 5. Create .env file from .env_example
-6. 
+6. Complete the .env with
 7. Move to the backend folder
 ```sh
 cd ./backend
