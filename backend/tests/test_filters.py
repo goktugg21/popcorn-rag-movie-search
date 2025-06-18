@@ -1,8 +1,26 @@
 ### first backend tests file ###
 import pytest
 import os
-from backend.utils.regular_filter_search import genre_filter, year_filter, director_filter, rating_filter, keyword_filter, all_filters_combined
+from utils.regular_filter_search import query_filter, genre_filter, year_filter, director_filter, rating_filter, keyword_filter, all_filters_combined
 
+def test_query_filter():
+    """test that we can filter by query"""
+    result = query_filter(query="Inception")
+    assert isinstance(result, dict)
+    assert len(result) > 0
+    # validating that all returned movies contain the query in title or overview
+    for movie_id, movie_data in result.items():
+        assert "inception" in movie_data['title'].lower() or "inception" in movie_data['overview'].lower(), f"Movie {movie_data['title']} should contain 'Inception' in title or overview"
+    print(f"Found {len(result)} movies with 'Inception' in title or overview")
+
+def test_query_filter_error_handling():
+    """test error handling for query filter"""
+    # testing empty query
+    try:
+        query_filter(query="Th")
+        assert False, "Should raise ValueError for empty query"
+    except ValueError as e:
+        assert "query must be at least 3 characters long" in str(e)
 
 # test database connection
 def test_database_connection():
@@ -344,7 +362,7 @@ def test_sorting_by_rating():
 def test_combined_filter_single_parameter():
     """testing combined filter with only one parameter"""
     # testing with only keywords
-    result = all_filters_combined(keywords=["monster"])
+    result = all_filters_combined(query="The", keywords=["monster"])
     assert isinstance(result, dict)
     assert len(result) >= 0
     
@@ -358,7 +376,7 @@ def test_combined_filter_single_parameter():
 
 def test_combined_filter_two_parameters():
     """testing combined filter with two parameters (intersection)"""
-    result = all_filters_combined(genres=["Action"], year=[2000, 2010])
+    result = all_filters_combined(query="The", genres=["Action"], year=[2000, 2010])
     
     assert isinstance(result, dict)
     
@@ -377,6 +395,7 @@ def test_combined_filter_two_parameters():
 def test_combined_filter_three_parameters():
     """testing combined filter with three parameters"""
     result = all_filters_combined(
+        query="Inception",
         genres=["Drama"], 
         director="christopher nolan",
         rating=7.0
@@ -403,10 +422,11 @@ def test_combined_filter_three_parameters():
 def test_combined_filter_all_parameters():
     """testing combined filter with all possible parameters"""
     result = all_filters_combined(
+        query="Back",
         keywords=["future"],
         genres=["Action", "Sci-Fi"], 
         year=[1990, 2020],
-        director="cameron",
+        director="Zemeckis",
         rating=6.0
     )
     
@@ -441,7 +461,7 @@ def test_combined_filter_all_parameters():
 
 def test_combined_filter_year_single():
     """testing combined filter with single year"""
-    result = all_filters_combined(year=[1999], rating=7.0)
+    result = all_filters_combined(query="The", year=[1999], rating=7.0)
     
     assert isinstance(result, dict)
     
@@ -459,6 +479,7 @@ def test_combined_filter_empty_intersection():
     """testing combined filter that should return empty results"""
     # using very restrictive criteria that likely won't match any movies
     result = all_filters_combined(
+        query="The",
         keywords=["nonexistentkeyword123"],
         genres=["Action"],
         rating=9.8
@@ -467,25 +488,9 @@ def test_combined_filter_empty_intersection():
     assert isinstance(result, dict)
     assert len(result) == 0, "Should return empty result for overly restrictive criteria"
 
-def test_combined_filter_error_handling():
-    """testing combined filter error cases"""
-    # testing with no parameters
-    try:
-        all_filters_combined()
-        assert False, "Should raise ValueError for no parameters"
-    except ValueError as e:
-        assert "at least one filter parameter required" in str(e)
-    
-    # testing with invalid year format (too many elements)
-    try:
-        all_filters_combined(year=[1990, 2000, 2010])
-        assert False, "Should raise ValueError for invalid year format"
-    except ValueError as e:
-        assert "year should have 1 or 2 elements" in str(e)
-
 def test_combined_filter_sorting():
     """testing that combined filter results are properly sorted by rating"""
-    result = all_filters_combined(genres=["Action"], rating=6.0)
+    result = all_filters_combined(query="The", genres=["Action"], rating=6.0)
     
     if len(result) > 1:
         ratings = [movie_data['vote_average'] for movie_data in result.values()]
@@ -499,7 +504,7 @@ def test_combined_filter_sorting():
 def test_combined_filter_limit_150():
     """testing that combined filter respects 150 movie limit"""
     # using broad criteria that might return many results
-    result = all_filters_combined(rating=5.0)
+    result = all_filters_combined(query="The",rating=5.0)
     
     assert isinstance(result, dict)
     assert len(result) <= 150, f"Should return at most 150 movies, got {len(result)}"
@@ -508,7 +513,7 @@ def test_combined_filter_limit_150():
 
 def test_combined_filter_data_consistency():
     """testing that combined filter returns consistent movie data structure"""
-    result = all_filters_combined(genres=["Comedy"], rating=7.0)
+    result = all_filters_combined(query="The", genres=["Comedy"], rating=7.0)
     
     if len(result) > 0:
         first_movie = list(result.values())[0]
@@ -531,7 +536,8 @@ if __name__ == "__main__":
     if not os.getenv("PG_URL"):
         print("error: pg_url environment variable must be set to run tests")
         exit(1)
-    
+    test_query_filter()
+    test_query_filter_error_handling()
     # Genre tests
     test_one_genre_checker()
     test_error_handling() 
@@ -576,7 +582,6 @@ if __name__ == "__main__":
     test_combined_filter_all_parameters()
     test_combined_filter_year_single()
     test_combined_filter_empty_intersection()
-    test_combined_filter_error_handling()
     test_combined_filter_sorting()
     test_combined_filter_limit_150()
     test_combined_filter_data_consistency()

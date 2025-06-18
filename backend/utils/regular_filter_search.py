@@ -2,7 +2,7 @@ import os
 from typing import Dict, List, Optional
 from sqlalchemy import create_engine, select, and_, or_
 from sqlalchemy.orm import sessionmaker
-from backend.models.movieModel import Movie
+from models.movieModel import Movie
 
 def get_db_session():
     """
@@ -74,6 +74,41 @@ def format_movie_result(movie: Movie)-> Dict[str, any]:
             'character_tropes': movie.character_tropes or metadata.get('character_tropes', '')
         }
     }
+
+def query_filter(query: str) -> Dict[str, any]:
+    """
+    filtering movies by query string and returning structured results
+    
+    args:
+        query (str): search query string to filter movie titles
+        
+    returns:
+        dict[str, any]: dictionary with movie titles as keys and movie data as values
+    
+    raises:
+        ValueError if validation fails
+    """
+    # validating query input
+    if not query or len(query.strip()) < 3:
+        raise ValueError("query must be at least 3 characters long")
+    
+    session = get_db_session()
+    try:
+        # finding movies that match the query in title or original title
+        query = query.strip().lower()
+        search_condition = Movie.original_title.ilike(f'%{query}%')
+        
+        result = session.execute(select(Movie).where(search_condition).order_by(Movie.vote_average.desc(), Movie.id.asc()))
+        movies = result.scalars().all()
+        
+        matching_movies: Dict[str, Dict[str, any]] = {}
+        for movie in movies:
+            matching_movies[str(movie.id)] = format_movie_result(movie)
+        
+        return matching_movies
+        
+    finally:
+        session.close()
 
 def genre_filter(*genres: str) -> Dict[str, any]:
     """
@@ -279,7 +314,7 @@ def keyword_filter(*keywords: str)->Dict[str, any]:
     finally:
         session.close()
 
-def all_filters_combined(keywords: List[str] = [],
+def all_filters_combined(query: str,keywords: List[str] = [],
                           genres: List[str] = [],
                           year: List[int] = [],
                           director: str = "",
@@ -304,16 +339,19 @@ def all_filters_combined(keywords: List[str] = [],
     Raises:
         ValueError: If no parameters provided, invalid year format, or too many keywords/genres
     """
-
-    # checking if at least one filter is provided
-    if not any([keywords, genres, year, director, rating > 0.0]):
-        raise ValueError("at least one filter parameter required")
     
     # getting results from each filter
     filter_results = []
     all_movie_data = {}  # collecting all movie data from all filters
     
-    # applying keyword filter if provided
+    if not query:
+        raise ValueError("query parameter cannot be empty")
+    
+    query_results = query_filter(query)
+    filter_results.append(set(query_results.keys()))
+    all_movie_data.update(query_results)
+    
+     # applying keyword filter if provided
     if keywords:
         keyword_movies = keyword_filter(*keywords)
         filter_results.append(set(keyword_movies.keys()))
@@ -340,7 +378,7 @@ def all_filters_combined(keywords: List[str] = [],
         filter_results.append(set(director_movies.keys()))
         all_movie_data.update(director_movies)
     
-    if rating > 0.0:
+    if rating :
         rating_movies = rating_filter(rating)
         filter_results.append(set(rating_movies.keys()))
         all_movie_data.update(rating_movies)
