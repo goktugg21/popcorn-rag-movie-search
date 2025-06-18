@@ -56,6 +56,8 @@ def format_movie_result(movie: Movie)-> Dict[str, any]:
         production_companies = clean_pipe_separated(metadata['production_companies'])
     
     return {
+        'id': movie.id,  
+        'title': movie.original_title,  
         'release_year': movie.release_year or metadata.get('release_year', 0),
         'vote_average': movie.vote_average or metadata.get('vote_average', 0.0),
         'vote_count': movie.vote_count or metadata.get('vote_count', 0),
@@ -81,14 +83,17 @@ def genre_filter(*genres: str) -> Dict[str, any]:
         *genres (str): variable number of genre strings to filter by
         
     returns:
-        dict[str, any]: dictionary with movie titles as keys and movie data as values,
-                       or error dictionary if validation fails
+        dict[str, any]: dictionary with movie titles as keys and movie data as values
+
+    raises: 
+        ValueError if validation fails
     """
     # validating input parameters before processing
     if len(genres) == 0:
         raise ValueError("at least one genre required")
     if len(genres) > 5:
-        return {"error": "maximum 5 genres allowed"}
+        raise ValueError("maximum 5 genres allowed")
+     
     
     # cleaning and deduplicating genre inputs
     clean_genres: List[str] = []
@@ -105,17 +110,15 @@ def genre_filter(*genres: str) -> Dict[str, any]:
             # check both direct field and metadata
             genre_conditions.append(Movie.genres.ilike(f'%{genre}%'))
         
-        query = select(Movie).where(or_(*genre_conditions)).order_by(Movie.vote_average.desc())
+        query = select(Movie).where(or_(*genre_conditions)).order_by(Movie.vote_average.desc(), Movie.id.asc())
         result = session.execute(query)
         movies = result.scalars().all()
         
-        # sorting after collecting all matches and limiting to top 150 movies
         matching_movies: Dict[str, Dict[str, any]] = {}
         for movie in movies:
-            matching_movies[movie.original_title]=format_movie_result(movie)
+            matching_movies[str(movie.id)] = format_movie_result(movie)
 
-        sorted_movies = dict(sorted(matching_movies.items(), key=lambda x: x[1]['vote_average'], reverse=True)[:150])
-        return sorted_movies
+        return matching_movies
         
     finally:
         session.close()
@@ -147,19 +150,17 @@ def year_filter(start_year: int, end_year: Optional[int] = None) -> Dict[str, an
     try:
         # finding movies within the year range
         query = select(Movie).where(
-            and_(Movie.release_year >= start_year, Movie.release_year <= end_year)).order_by(Movie.vote_average.desc())
+        and_(Movie.release_year >= start_year, Movie.release_year <= end_year)
+        ).order_by(Movie.vote_average.desc(), Movie.id.asc())
         
         result = session.execute(query)
         movies = result.scalars().all()
         
-        # sorting after collecting all matches and limiting to top 150 movies
         matching_movies: Dict[str, Dict[str, any]] = {}
         for movie in movies:
-            matching_movies[movie.original_title] = format_movie_result(movie)
+            matching_movies[str(movie.id)] = format_movie_result(movie)
         
-        sorted_movies = dict(sorted(matching_movies.items(), key=lambda x: x[1]['vote_average'], reverse=True)[:150])
-
-        return sorted_movies
+        return matching_movies
         
     finally:
         session.close()
@@ -172,29 +173,28 @@ def director_filter(director_name: str)-> Dict[str, any]:
         director_name (str): director name to search for (partial matching supported)
         
     returns:
-        dict[str, any]: dictionary with movie titles as keys and movie data as values,
-                       or error dictionary if validation fails
+        dict[str, any]: dictionary with movie titles as keys and movie data as values
+    
+    raises:
+        ValueError if validation fails
     """
     # validating director name length
     if len(director_name.strip()) < 3:
-        return {"error": "director name must be at least 3 characters"}
+        raise ValueError("director name must be at least 3 characters")
     
     session = get_db_session()
     try:
         # finding movies with matching director
-        query = select(Movie).where(Movie.director.ilike(f'%{director_name.strip()}%')).order_by(Movie.vote_average.desc())
+        query = select(Movie).where(Movie.director.ilike(f'%{director_name.strip()}%')).order_by(Movie.vote_average.desc(), Movie.id.asc())
         
         result = session.execute(query)
         movies = result.scalars().all()
         
-        # sorting after collecting all matches and limiting to top 150 movies
         matching_movies: Dict[str, Dict[str, any]] = {}
         for movie in movies:
-            matching_movies[movie.original_title] = format_movie_result(movie)
+            matching_movies[str(movie.id)] = format_movie_result(movie)
         
-        sorted_movies = dict(sorted(matching_movies.items(), key=lambda x: x[1]['vote_average'], reverse=True)[:150])
-
-        return sorted_movies
+        return matching_movies
         
     finally:
         session.close()
@@ -212,26 +212,24 @@ def rating_filter(minimum_rating: float)->Dict[str, any]:
     """
     # validating rating input
     if minimum_rating < 0.0:
-        return {"error": "rating cannot be negative"}
+        raise ValueError("rating cannot be negative")
     if minimum_rating > 10.0:
-        return {"error": "rating cannot be above 10.0"}
+        raise ValueError("rating cannot be above 10.0")
     
     session = get_db_session()
     try:
         # finding movies with rating >= minimum_rating
         query = select(Movie).where(
-            Movie.vote_average >= minimum_rating).order_by(Movie.vote_average.desc())
+        Movie.vote_average >= minimum_rating).order_by(Movie.vote_average.desc(), Movie.id.asc())
         
         result = session.execute(query)
         movies = result.scalars().all()
         
-        # sorting after collecting all matches and limiting to top 150 movies
         matching_movies: Dict[str, Dict[str, any]] = {}
         for movie in movies:
-            matching_movies[movie.original_title] = format_movie_result(movie)
+            matching_movies[str(movie.id)] = format_movie_result(movie)
         
-        sorted_movies = dict(sorted(matching_movies.items(), key=lambda x: x[1]['vote_average'], reverse=True)[:150])
-        return sorted_movies
+        return matching_movies
         
     finally:
         session.close()
@@ -246,18 +244,21 @@ def keyword_filter(*keywords: str)->Dict[str, any]:
     returns:
         dict[str, any]: dictionary with movie titles as keys and movie data as values,
                        or error dictionary if validation fails
+    raises:
+        ValueError if validation fails
     """
     # validating input parameters
     if len(keywords) == 0:
         raise ValueError("at least one keyword required")
     if len(keywords) > 5:
-        return {"error": "maximum 5 keywords allowed"}
-    
+        raise ValueError("maximum 5 keywords allowed")
+       
     # cleaning and deduplicating keyword inputs
     clean_keywords: List[str] = []
-    for keyword in keywords:
-        if keyword.strip() and keyword.strip().lower() not in [k.lower() for k in clean_keywords]:
-            clean_keywords.append(keyword.strip().lower())
+    
+    for kw in keywords:
+        if kw.strip() and kw.strip().lower() not in [k.lower() for k in clean_keywords]:
+            clean_keywords.append(kw.strip().lower())
     
     session = get_db_session()
     try:
@@ -266,17 +267,90 @@ def keyword_filter(*keywords: str)->Dict[str, any]:
         for keyword in clean_keywords:
             keyword_conditions.append(Movie.keywords.ilike(f'%{keyword}%'))
         
-        query = select(Movie).where(or_(*keyword_conditions)).order_by(Movie.vote_average.desc())
+        query = select(Movie).where(or_(*keyword_conditions)).order_by(Movie.vote_average.desc(), Movie.id.asc())
         result = session.execute(query)
         movies = result.scalars().all()
         
-        # sorting after collecting all matches and limiting to top 150 movies
         matching_movies: Dict[str, Dict[str, any]] = {}
         for movie in movies:
-            matching_movies[movie.original_title] = format_movie_result(movie)
-        sorted_movies = dict(sorted(matching_movies.items(), key=lambda x: x[1]['vote_average'], reverse=True)[:150])
-        return sorted_movies
+            matching_movies[str(movie.id)] = format_movie_result(movie)
+        return matching_movies
         
     finally:
         session.close()
 
+def all_filters_combined(keywords: List[str] = [],
+                          genres: List[str] = [],
+                          year: List[int] = [],
+                          director: str = "",
+                          rating: float = 0.0
+                          ) -> Dict[str, any]:
+    """
+    Apply multiple movie filters and return movies that match ALL criteria.
+    Results sorted by rating (highest first), limited to 150 movies.
+    
+    Args:
+        keywords (List[str], optional): Keywords to search (max 5). Example: ["monster", "island"]
+        genres (List[str], optional): Genres to filter by (max 5). Example: ["Action", "Comedy"]
+        year (List[int], optional): [year] or [start_year, end_year]. Example: [1999] or [2000, 2010]
+        director (str, optional): Director name (min 3 chars). Example: "christopher nolan"
+        rating (float, optional): Minimum rating 0.0-10.0. Example: 7.5
+    
+    Returns:
+        Dict[str, any]: Movie IDs as keys, movie data as values containing:
+            id, title, release_year, vote_average, vote_count, runtime, genres, director,
+            hidden_details (stars, keywords, production_companies, tagline, overview, etc.)
+    
+    Raises:
+        ValueError: If no parameters provided, invalid year format, or too many keywords/genres
+    """
+
+    # checking if at least one filter is provided
+    if not any([keywords, genres, year, director, rating > 0.0]):
+        raise ValueError("at least one filter parameter required")
+    
+    # getting results from each filter
+    filter_results = []
+    all_movie_data = {}  # collecting all movie data from all filters
+    
+    # applying keyword filter if provided
+    if keywords:
+        keyword_movies = keyword_filter(*keywords)
+        filter_results.append(set(keyword_movies.keys()))
+        all_movie_data.update(keyword_movies)
+    
+    # applying other filters if provided
+    if genres:
+        genre_movies = genre_filter(*genres)
+        filter_results.append(set(genre_movies.keys()))
+        all_movie_data.update(genre_movies)
+    
+    if year:
+        if len(year) == 1:
+            year_movies = year_filter(year[0])    
+        elif len(year) == 2:
+            year_movies = year_filter(year[0], year[1])
+        else:
+            raise ValueError("year should have 1 or 2 elements")
+        filter_results.append(set(year_movies.keys()))
+        all_movie_data.update(year_movies)
+
+    if director:
+        director_movies = director_filter(director)
+        filter_results.append(set(director_movies.keys()))
+        all_movie_data.update(director_movies)
+    
+    if rating > 0.0:
+        rating_movies = rating_filter(rating)
+        filter_results.append(set(rating_movies.keys()))
+        all_movie_data.update(rating_movies)
+    
+    # finding intersection of all filter results
+    common_movies = set.intersection(*filter_results) if filter_results else set()
+    
+    # building final result dictionary with movie data
+    final_movies = {movie_id: all_movie_data[movie_id] for movie_id in common_movies if movie_id in all_movie_data}
+    
+    # sorting by rating and limit to top 150
+    sorted_movies = dict(sorted(final_movies.items(), key=lambda x: x[1]['vote_average'], reverse=True)[:150])
+    return sorted_movies
