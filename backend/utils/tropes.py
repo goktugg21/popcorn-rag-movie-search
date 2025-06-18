@@ -1,4 +1,4 @@
-from models.Base import Base
+#from models.Base import Base
 from flask import Flask, request
 from sqlalchemy import update, insert, delete, select
 from sqlalchemy import create_engine, text
@@ -8,11 +8,10 @@ from models.movieModel import Movie
 from dotenv import load_dotenv
 import os
 
-app: Flask = Flask(__name__)
-load_dotenv()
-
-@app.route('/add_trope', methods=['POST'])
-def add_trope(user_text: str, selected_id: int, connection: Session):
+def add_trope(user_text: str, selected_id: int, connection: Session) -> None:
+    """"
+    Add character trope to an already existing movie.
+    """
     stmt = (
         update(Movie)
         .where(Movie.id == selected_id)
@@ -22,9 +21,18 @@ def add_trope(user_text: str, selected_id: int, connection: Session):
     connection.commit()
 
 
-@app.route('/trope_filter', methods=['GET'])
-def trope_filter(session: Session):
+def trope_filter(session: Session) -> list:
+    """
+    Show all movies with character tropes.
+    """
     stmt = select(Movie).where(Movie.character_tropes != "").order_by(Movie.id)
     return session.execute(stmt).all()
 
 
+def movies_with_trope(user_trope: str, session: Session) -> list:
+    """
+    Retrieve all movies that contain a specific character trope.
+    """
+    stmt = select(Movie).where(Movie.character_tropes == user_trope).order_by(Movie.original_title)
+    results = session.execute(stmt).all()
+    return results
