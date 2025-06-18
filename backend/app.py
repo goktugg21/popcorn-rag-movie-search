@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, insert, select, delete
 from dotenv import load_dotenv
 from flask import Flask, request, make_response
+from models.Favourite import Favourite
 from models.Base import Base
 import models.User as User
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,7 +15,7 @@ from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from models.Base import Base
 from utils.tropes import add_trope
-
+from typing import Optional, Tuple
 import os
 from sqlalchemy import text
 from models.movieModel import Movie
@@ -23,6 +24,9 @@ from sqlalchemy.engine import Engine
 from llama_index.core.base.response.schema import Response
 
 app: Flask = Flask(__name__)
+load_dotenv()
+# Create the database engine and initialize the tables
+engine: Engine = create_engine(os.getenv("PG_URL"))
 
 load_dotenv()
 # Create the database engine and initialize the tables
@@ -68,15 +72,16 @@ def delete_account():
     username = user_data['username']
     password = user_data['password']
     
-    stmp = select(User).where(User.username == username)
     connection = engine.connect()
-
+    stmp = select(User).where(User.username == username)
     res = connection.execute(stmp).first()
 
     if not res or not check_password_hash(res.user_password, password):
         return 'Invalid username or password', 401
 
-    connection.execute(delete(User).where(User.username == username and User.user_password == res.user_password))
+    connection.execute(delete(Favourite).where(Favourite.user_id == res.id))
+    connection.execute(delete(User).where(User.id == res.id))
+
     connection.commit()
 
     return 'User account deleted successfully', 200
@@ -118,12 +123,11 @@ def login():
 
     return response, 200
 
-@app.route('/check_login', methods=['GET'])
-def check_login():
+def check_login() -> Tuple[Optional[int], Optional[str], int]:
     token = request.cookies.get('token')
 
     if not token:
-        return 'Token missing', 401
+        return None, 'Token missing', 401
     
     try:
         decoded = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=['HS256'])
@@ -134,11 +138,11 @@ def check_login():
         res = connection.execute(stmp).first()
 
         if not res:
-            return 'User not found', 401
-        return f'Logged in as {res.username}', 200
+            return None, 'User not found', 401
+        return id, None, 200
     
     except Exception:
-        return 'Invalid or expired token', 401
+        return None, 'Invalid or expired token', 401
     
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -163,6 +167,7 @@ def aiSearch() -> FlaskResponse:
     chat_res_text = chat_res.response
     movies_found = [movie.metadata.get("imdb_id") for movie in chat_res.source_nodes]
     return jsonify({"response": chat_res_text, "movie_ids": movies_found}), 200
+
 
 @app.route('/movie', methods=['GET'])
 def get_movie():
@@ -198,6 +203,43 @@ def get_movie():
             
         }, 200
 
+@app.route('/add_favourite', methods=['POST'])
+def add_favourite():
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    data = request.get_json()
+    movie_id = data.get('movie_id')
+
+    conn = engine.connect()
+    stmt = insert(Favourite).values(user_id=user_id, movie_id=movie_id)
+    res = conn.execute(stmt).first()
+    conn.commit()
+
+
+    return 'Favourite added successfully', 200
+
+@app.route('/delete_favourite', methods=['POST'])
+def delete_favourite():
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    data = request.get_json()
+    movie_id = data.get('movie_id')
+
+    conn = engine.connect()
+    stmt = delete(Favourite).where(user_id==user_id , movie_id==movie_id)
+    res = conn.execute(stmt)
+
+    if res.rowcount == 0:
+        return 'Favourite not found', 404
+
+    conn.commit()
+
+    return 'Favourite deleted successfully', 200
+  
 if __name__ == '__main__':
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:

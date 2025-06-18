@@ -1,60 +1,61 @@
-import pytest
-from utils.tropes import add_trope, trope_filter
-from dotenv import load_dotenv
-from sqlalchemy import create_engine,select
 import os
+import sys 
+
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+# Load environment variables from .env file
+
+import pytest
+from utils.tropes import trope_filter, add_trope
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, select, insert, delete, or_
 from sqlalchemy.orm import Session, sessionmaker
-from backend.models import Movie
+from models.movieModel import Movie
 from typing import List
+
 
 @pytest.fixture
 def engine_add_trope():
+    """Fixture to set up and tear down the database for add_trope tests."""
     load_dotenv()
     engine = create_engine(os.getenv("PG_URL"))
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    session.add_all([
-        Movie(id="1", character_tropes="Poor hero"),
-        Movie(id="2", character_tropes='Rebel')
-    ])
-    session.commit()
-    yield session
-    session.close()
-
-"""def test_add_trope(engine):
     with engine.connect() as connection:
-        add_trope("movie","100",connection)"""
+        connection.execute(insert(Movie).values(id=100002,character_tropes = "Rebel"))
+        connection.execute(insert(Movie).values(id=100003,character_tropes = "Poor hero"))
+        connection.commit()
+    yield engine
+    with engine.connect() as connection:
+        connection.execute(delete(Movie).where(or_(Movie.id == 100002, Movie.id == 100003)))
+        connection.commit()
+    
 
-def test_add_trope(connection):
-    assert add_trope("Poor hero","1",connection)
-    assert add_trope("Rebel","100",connection)
-    results = connection.execute(select(Movie).order_by(Movie.id))
-    assert results[0]["character_tropes"] == "Poor hero"
-    assert results[1]["character_tropes"] == "Rebel"
+def test_add_trope(engine_add_trope):
+    """Test the add_trope function."""
+    with engine_add_trope.connect() as connection:
+        add_trope("Poor hero", 100003, connection)
+        add_trope("Rebel", 100002, connection)
+        results = connection.execute(select(Movie).where(or_(Movie.id == 100002, Movie.id == 100003))).all()
+        print(results)
+        assert results[1][-1] == "Poor hero"
+        assert results[0][-1] == "Rebel"
 
 
 @pytest.fixture
 def engine_trope_filter():
+    """Fixture to set up and tear down the database for trope_filter tests."""
     load_dotenv()
     engine = create_engine(os.getenv("PG_URL"))
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    session.add_all([
-        Movie(id="1", character_tropes="Villain"),
-        Movie(id="2", character_tropes=''),
-        Movie(id="3", character_tropes=''),
-        Movie(id="4", character_tropes="Idiot")
-    ])
-    session.commit()
-    yield session
-    session.close()
+    with engine.connect() as connection:
+        connection.execute(insert(Movie).values(id=100000,character_tropes = "Villain"))
+        connection.execute(insert(Movie).values(id=100001,character_tropes = ""))
+        connection.commit()
+    yield engine
+    with engine.connect() as connection:
+        connection.execute(delete(Movie).where(or_(Movie.id == 100000, Movie.id == 100001)))
+        connection.commit()
 
-def test_trope_filter(engine):
-    results = trope_filter(engine)
-    movie_id = []
-    for movie in results:
-        movie_id = movie_id.append(movie.id)
-    assert "1" in movie_id
-    assert "4" in movie_id
-    assert "3" not in movie_id
-    assert "2" not in movie_id
+def test_trope_filter(engine_trope_filter):
+    """Test the trope_filter function."""
+    results = trope_filter(engine_trope_filter.connect())
+    movie_id = [movie.id for movie in results]
+    assert 100000 in movie_id
+    assert 100001 not in movie_id
