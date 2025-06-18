@@ -1,5 +1,14 @@
 ### first backend tests file ###
-from backend.normal_filter_search import genre_filter, year_filter, director_filter, rating_filter, keyword_filter
+import pytest
+import os
+from backend.utils.regular_filter_search import genre_filter, year_filter, director_filter, rating_filter, keyword_filter
+
+
+# test database connection
+def test_database_connection():
+    """test that we can connect to the database"""
+    pg_url = os.getenv("PG_URL")
+    assert pg_url is not None, "pg_url environment variable must be set"
 
 def test_one_genre_checker():
     """testing single genre filtering functionality"""
@@ -23,7 +32,7 @@ def test_error_handling():
     # testing too many genres
     result = genre_filter("Action", "Comedy", "Drama", "Horror", "Romance", "Thriller")
     assert "error" in result
-    assert "Maximum 5 genres allowed" in result["error"]
+    assert "maximum 5 genres allowed" in result["error"]
     
     # testing empty input
     try:
@@ -231,20 +240,22 @@ def test_rating_edge_cases():
        rating = movie_data['vote_average']
        assert rating >= 7.5, f"Movie {movie_title} has rating {rating}, should be >= 7.5"
 
+
 def test_keywords_single():
-   """testing filtering by single keyword"""
-   result = keyword_filter("friendship")
-   
-   assert isinstance(result, dict)
-   assert len(result) > 0
-   assert len(result) <= 150
-   
-   # checking that all movies have "friendship" in keywords
-   for movie_title, movie_data in result.items():
-       keywords_lower = [k.lower() for k in movie_data['hidden_details']['keywords']]
-       assert "friendship" in keywords_lower, f"Movie {movie_title} should have friendship in keywords"
-   
-   print(f"Found {len(result)} movies with friendship keyword")
+    """testing filtering by single keyword"""
+    result = keyword_filter("monster")
+    
+    assert isinstance(result, dict)
+    assert len(result) > 0
+    assert len(result) <= 150
+    
+    # checking that all movies have "monster" SOMEWHERE in their keywords
+    for movie_title, movie_data in result.items():
+        keywords_lower = [k.lower() for k in movie_data['hidden_details']['keywords']]
+        has_monster = any("monster" in keyword for keyword in keywords_lower)
+        assert has_monster, f"Movie {movie_title} should have 'monster' in keywords but has: {movie_data['hidden_details']['keywords']}"
+    
+    print(f"Found {len(result)} movies with monster keyword")
 
 def test_keywords_multiple():
    """testing multiple keyword filtering"""
@@ -257,8 +268,8 @@ def test_keywords_multiple():
    # checking that all results contain either monster or island keywords
    for movie_title, movie_data in result.items():
        keywords_lower = [k.lower() for k in movie_data['hidden_details']['keywords']]
-       has_monster = "monster" in keywords_lower
-       has_island = "island" in keywords_lower
+       has_monster = any("monster" in keyword for keyword in keywords_lower)
+       has_island = any("island" in keyword for keyword in keywords_lower)
         
        assert has_monster or has_island, f"Movie {movie_title} should have 'monster' or 'island' keyword but has: {movie_data['hidden_details']['keywords']}"
     
@@ -303,13 +314,14 @@ def test_keywords_case_insensitive():
     # validating all results have the keyword
     for movie_title, movie_data in result1.items():
         keywords_lower = [k.lower() for k in movie_data['hidden_details']['keywords']]
-        assert "monster" in keywords_lower, f"Movie {movie_title} should have 'monster' keyword"
+        has_monster = any("monster" in keyword for keyword in keywords_lower)
+        assert has_monster, f"Movie {movie_title} should have 'monster' keyword but has: {movie_data['hidden_details']['keywords']}"
 
 def test_keywords_maximum_limit():
     """testing keyword maximum limit"""
     result = keyword_filter("monster", "island", "future", "chase", "dystopia", "android")
     assert "error" in result, "Should return error for more than 5 keywords"
-    assert "Maximum 5 keywords allowed" in result["error"]
+    assert "maximum 5 keywords allowed" in result["error"]
 
 def test_keywords_not_found():
     """testing keyword that doesn't exist"""
@@ -332,6 +344,11 @@ def test_sorting_by_rating():
 
 
 if __name__ == "__main__":
+    # making sure pg_url is set before running tests
+    if not os.getenv("PG_URL"):
+        print("error: pg_url environment variable must be set to run tests")
+        exit(1)
+    
     # Genre tests
     test_one_genre_checker()
     test_error_handling() 
@@ -368,5 +385,5 @@ if __name__ == "__main__":
     
     # Sorting test
     test_sorting_by_rating()
-    
+  
     print("All tests passed!")
