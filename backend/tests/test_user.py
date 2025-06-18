@@ -1,18 +1,19 @@
 from flask import Response
 from flask.testing import FlaskClient
 import pytest
+from sqlalchemy import Engine, create_engine
 from app import app
 from dotenv import load_dotenv
 import os
+from models.Base import Base
+from sqlalchemy import text
+
+
 
 ### first backend tests file ###
 
-### user tests
-
 @pytest.fixture
 def test_app():
-    load_dotenv()
-
     app.config['TESTING'] = True
     yield app
 
@@ -25,13 +26,15 @@ def runner(test_app):
     return test_app.test_cli_runner()
 
 def test_register_user(client):
+
     response = client.post('/register', json={
         'username' : 'test_user',
         'password' : 'test_password'
     })
-    
+
     assert response.status_code == 200
     assert response.get_data(as_text=True) == 'User registered successfully'
+
 
 
 def test_register_user_existing_username(client):
@@ -62,15 +65,29 @@ def test_login_user(client):
     assert response.status_code == 200
     assert response.get_data(as_text=True) == 'Login successful'
 
-def test_check_login(client: FlaskClient):
-    response: Response = client.post('/login', json={
+def test_add_favourite(client):    
+    response = client.post('/login', json={
         'username' : 'test_user',
         'password' : 'test_password'
     })
+    response = client.post('/add_favourite', json={
+        'movie_id': '1'
+    })
+    
+    assert response.status_code == 200
+    assert response.get_data(as_text=True) == 'Favourite added successfully'
 
-    response: Response = client.get('/check_login')
-    assert response._status_code == 200
-    assert response.get_data(as_text=True) == 'Logged in as test_user'
+def test_delete_favourite(client):
+    response = client.post('/login', json={
+        'username' : 'test_user',
+        'password' : 'test_password'
+    })
+    response = client.post('/delete_favourite', json={
+        'movie_id': '1'
+    })
+    
+    assert response.status_code == 200
+    assert response.get_data(as_text=True) == 'Favourite deleted successfully'
 
 def test_logout(client):
     response = client.get('/logout')
