@@ -20,6 +20,7 @@ import os
 from sqlalchemy import text
 from models.movieModel import Movie
 from utils.rag_tools import create_index, load_movies_from_csv, chat, getQEngine
+from utils.regular_filter_search import all_filters_combined
 from sqlalchemy.engine import Engine
 from llama_index.core.base.response.schema import Response
 
@@ -315,6 +316,21 @@ def movies_with_trope_route():
         return jsonify({"message": "No movies found with the specified trope"}), 404
     return jsonify(response), 200
 
+@app.get('/search')
+def search_movies():
+    """
+    Endpoint to search for movies with various filters.
+    """
+    data = request.get_json()
+    query: str = data.get('query')
+    keyword: list = data.get('keyword')
+    genres: list = data.get('genres')
+    year: list = data.get('year')
+    director: list = data.get('director')
+    rating: float = data.get('rating')
+
+    return jsonify(all_filters_combined(query, keyword, genres, year, director, rating)), 200
+    
 if __name__ == '__main__':
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:
