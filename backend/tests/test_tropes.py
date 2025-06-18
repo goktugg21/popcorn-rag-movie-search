@@ -5,7 +5,7 @@ import sys
 # Load environment variables from .env file
 
 import pytest
-from utils.tropes import trope_filter, add_trope
+from utils.tropes import trope_filter, add_trope, movies_with_trope
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, select, insert, delete, or_
 from sqlalchemy.orm import Session, sessionmaker
@@ -59,3 +59,30 @@ def test_trope_filter(engine_trope_filter):
     movie_id = [movie.id for movie in results]
     assert 100000 in movie_id
     assert 100001 not in movie_id
+
+@pytest.fixture
+def engine_movies_with_trope():
+    """Fixture to set up and tear down the database for movies_with_trope tests."""
+    load_dotenv()
+    engine = create_engine(os.getenv("PG_URL"))
+    with engine.connect() as connection:
+        connection.execute(insert(Movie).values(id=100004, character_tropes="Lover"))
+        connection.execute(insert(Movie).values(id=100005, character_tropes="Psychopath"))
+        connection.commit()
+    yield engine
+    with engine.connect() as connection:
+        connection.execute(delete(Movie).where(or_(Movie.id == 100004, Movie.id == 100005)))
+        connection.commit()
+
+def test_movies_with_trope(engine_movies_with_trope):
+    """Test the movies_with_trope function."""
+    with engine_movies_with_trope.connect() as connection:
+        results = movies_with_trope("Lover", connection)
+        movie_ids = [movie.id for movie in results]
+        assert 100004 in movie_ids
+        assert 100005 not in movie_ids
+
+        results = movies_with_trope("Psychopath", connection)
+        movie_ids = [movie.id for movie in results]
+        assert 100005 in movie_ids
+        assert 100004 not in movie_ids
