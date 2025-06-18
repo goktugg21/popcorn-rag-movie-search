@@ -168,6 +168,41 @@ def aiSearch() -> FlaskResponse:
     movies_found = [movie.metadata.get("imdb_id") for movie in chat_res.source_nodes]
     return jsonify({"response": chat_res_text, "movie_ids": movies_found}), 200
 
+
+@app.route('/movie', methods=['GET'])
+def get_movie():
+    """
+    Get a movie by its ID.
+    """
+    movie_id = request.args.get('id')
+    movie_imdb_id = request.args.get('imdb_id')
+    
+    if movie_id:
+        stmp = select(Movie).where(Movie.id == movie_id)
+    elif movie_imdb_id:
+        stmp = select(Movie).where(Movie.imdb_id == movie_imdb_id)
+    else:
+        return 'Movie ID or IMDb ID is required', 400    
+    
+    with engine.connect() as connection:
+        res = connection.execute(stmp)
+        row = res.first()
+        if row is None:
+            return 'Movie not found', 404
+        result = dict(row._mapping)
+        print(result)
+        return {
+            'id': result.get('id'),
+            'imdb_id': result['imdb_id'],
+            'original_title': result['original_title'],
+            'popularity': result['popularity'],
+            'overview': result.get('text'),
+            'release_date': result['release_date'],
+            'budget': result['budget'],
+            'character_tropes': result.get('character_tropes')
+            
+        }, 200
+
 @app.route('/add_favourite', methods=['POST'])
 def add_favourite():
     user_id, error_msg, error_code = check_login()
@@ -181,6 +216,7 @@ def add_favourite():
     stmt = insert(Favourite).values(user_id=user_id, movie_id=movie_id)
     res = conn.execute(stmt).first()
     conn.commit()
+
 
     return 'Favourite added successfully', 200
 
@@ -203,10 +239,7 @@ def delete_favourite():
     conn.commit()
 
     return 'Favourite deleted successfully', 200
-
-if __name__ == '__main__':
-    
-=======
+  
 if __name__ == '__main__':
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:
