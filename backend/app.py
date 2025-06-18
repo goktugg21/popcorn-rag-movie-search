@@ -14,7 +14,7 @@ from models.Base import Base
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from models.Base import Base
-from utils.tropes import add_trope
+from utils.tropes import add_trope, trope_filter, movies_with_trope
 from typing import Optional, Tuple
 import os
 from sqlalchemy import text
@@ -27,11 +27,6 @@ app: Flask = Flask(__name__)
 load_dotenv()
 # Create the database engine and initialize the tables
 engine: Engine = create_engine(os.getenv("PG_URL"))
-
-load_dotenv()
-# Create the database engine and initialize the tables
-engine: Engine = create_engine(os.getenv("PG_URL"))
-
 
 
 @app.route('/register', methods=['POST'])
@@ -239,7 +234,87 @@ def delete_favourite():
     conn.commit()
 
     return 'Favourite deleted successfully', 200
-  
+
+@app.route('/add_trope', methods=['POST'])
+def add_trope_route():
+    """
+    Endpoint to add a trope to a movie.
+    """
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    data = request.get_json()
+    user_trope = data.get('user_trope')
+    selected_movie_id = data.get('selected_movie_id')
+
+    if not user_trope or not selected_movie_id:
+        return 'Movie has to be selected and character trope cannot be empty', 400
+
+    with engine.connect() as connection:
+        add_trope(user_trope, selected_movie_id, connection)
+
+    return 'Trope added successfully', 200
+
+@app.route('/trope_filter', methods=['GET'])
+def trope_filter_route():
+    """
+    Endpoint to filter movies by character tropes.
+    """
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    with engine.connect() as connection:
+        results = trope_filter(connection)
+
+    movies = [movie for movie in results]
+    
+    response = []
+    for movie in movies:
+        movie_data = {
+            'id': movie.id,
+            'character_tropes': movie.character_tropes,
+            'original_title': movie.original_title
+        }
+        response.append(movie_data)
+
+    return jsonify(response), 200
+
+@app.route('/movies_with_trope', methods=['GET'])
+def movies_with_trope_route():
+    """
+    Endpoint to get movies with a specific character trope.
+    """
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    data = request.get_json()
+    user_trope: str = data.get('user_trope')    
+
+    if not user_trope:
+        return 'Character trope cannot be empty', 400
+    else:
+        user_trope = user_trope.capitalize()
+        
+    with engine.connect() as connection:
+        results = movies_with_trope(user_trope, connection)
+
+    movies = [movie for movie in results]
+    
+    response = []
+    for movie in movies:
+        movie_data = {
+            'id': movie.id,
+            'character_tropes': movie.character_tropes,
+            'original_title': movie.original_title
+        }
+        response.append(movie_data)
+    if not response:
+        return jsonify({"message": "No movies found with the specified trope"}), 404
+    return jsonify(response), 200
+
 if __name__ == '__main__':
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:
@@ -247,8 +322,7 @@ if __name__ == '__main__':
         connection.commit()
         Base.metadata.create_all(engine)
         res = connection.execute(select(Movie))
-        add_trope("movie","100",connection)
-    
+
     # If the movies table is empty, create the index and populate the table from the CSV file
     if(res.all() == []):
         create_index(load_movies_from_csv(os.getenv("MOVIE_CSV_FILE")))
