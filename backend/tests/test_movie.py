@@ -1,15 +1,23 @@
 import pytest
 from app import app
-
 @pytest.fixture
-def client():
-    app.test_client()
+def test_app():
 
-def test_get_movie_by_imdbID(client):
+    app.config['TESTING'] = True
+    yield app
+@pytest.fixture()
+def client(test_app):
+    yield test_app.test_client()
+
+@pytest.fixture()
+def runner(test_app):
+    return test_app.test_cli_runner()
+
+def test_get_movie_by_id(client):
     """
-    Test the /movie endpoint to ensure it returns a movie by ID.
+    Test the /movie endpoint with id.
     """
-    response = client.get('/movie/imdbID/1')  # Example IMDb ID for "The Shawshank Redemption"
+    response = client.get('/movie?id=1')  
     data = response.get_json()
     assert 'original_title' in data
     assert 'id' in data
@@ -18,11 +26,11 @@ def test_get_movie_by_imdbID(client):
     assert 'release_date' in data
     assert 'budget' in data
 
-def test_get_movie_by_id(client):
+def test_get_movie_by_imdb_id(client):
     """
-    Test the /movie endpoint to ensure it returns a movie by ID.
+    Test the /movie endpoint with IMDb ID.
     """
-    response = client.get('/movie/id/1')  # Example ID for "The Shawshank Redemption"
+    response = client.get('/movie?imdb_id=tt0111161')  
     data = response.get_json()
     assert 'original_title' in data
     assert 'id' in data
