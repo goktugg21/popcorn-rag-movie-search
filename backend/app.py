@@ -142,7 +142,6 @@ def check_login() -> Tuple[Optional[int], Optional[str], int]:
     
 @app.route('/logout', methods=['GET'])
 def logout():
-
     response = make_response('Logged out successfully')
     response.set_cookie('token', '', expires=0, httponly=True, secure=True, samesite='Lax')
     return response, 200
