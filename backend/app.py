@@ -23,11 +23,13 @@ from utils.rag_tools import create_index, load_movies_from_csv, chat, getQEngine
 from utils.regular_filter_search import all_filters_combined
 from sqlalchemy.engine import Engine
 from llama_index.core.base.response.schema import Response
+from flask_cors import CORS
 
 app: Flask = Flask(__name__)
 load_dotenv()
 # Create the database engine and initialize the tables
 engine: Engine = create_engine(os.getenv("PG_URL"))
+CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
 
 @app.route('/register', methods=['POST'])
