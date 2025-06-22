@@ -52,50 +52,7 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
   };
 
   return (
-    <>
-      <style>{`
-        /* Custom range slider styles */
-        .slider-thumb-blue::-webkit-slider-thumb {
-          appearance: none;
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .slider-thumb-red::-webkit-slider-thumb {
-          appearance: none;
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #ef4444;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .slider-thumb-blue::-moz-range-thumb,
-        .slider-thumb-red::-moz-range-thumb {
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .slider-thumb-blue::-moz-range-thumb {
-          background: #3b82f6;
-        }
-        
-        .slider-thumb-red::-moz-range-thumb {
-          background: #ef4444;
-        }
-      `}</style>
-      <div className="w-full max-w-3xl">
+    <div className="w-full max-w-3xl">
       {/* Search mode toggle */}
       <div className="flex justify-end mb-2">
         <div className="inline-flex rounded-md shadow-sm" role="group">
@@ -221,34 +178,70 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
                     <span className="text-xs text-gray-500 dark:text-gray-400">{yearRange[0]}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{yearRange[1]}</span>
                   </div>
-                  <div className="relative">
-                    {/* Min Year Slider */}
-                    <input
-                      type="range"
-                      min="1900"
-                      max="2025"
-                      value={yearRange[0]}
-                      onChange={(e) => {
-                        const newMin = parseInt(e.target.value);
-                        setYearRange([Math.min(newMin, yearRange[1]), yearRange[1]]);
+                  
+                  {/* Range Slider Track */}
+                  <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4">
+                    {/* Active range highlight */}
+                    <div 
+                      className="absolute h-2 bg-blue-500 rounded-lg"
+                      style={{
+                        left: `${((yearRange[0] - 1900) / (2025 - 1900)) * 100}%`,
+                        width: `${((yearRange[1] - yearRange[0]) / (2025 - 1900)) * 100}%`
                       }}
-                      className="absolute w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-thumb-blue"
-                      style={{ zIndex: 1 }}
                     />
-                    {/* Max Year Slider */}
-                    <input
-                      type="range"
-                      min="1900"
-                      max="2025"
-                      value={yearRange[1]}
-                      onChange={(e) => {
-                        const newMax = parseInt(e.target.value);
-                        setYearRange([yearRange[0], Math.max(newMax, yearRange[0])]);
+                    
+                    {/* Min thumb */}
+                    <div
+                      className="absolute w-4 h-4 bg-blue-600 border-2 border-white rounded-full shadow-md cursor-pointer transform -translate-y-1 hover:bg-blue-700"
+                      style={{
+                        left: `${((yearRange[0] - 1900) / (2025 - 1900)) * 100}%`,
+                        transform: 'translateX(-50%) translateY(-25%)'
                       }}
-                      className="absolute w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-thumb-red"
-                      style={{ zIndex: 2 }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                        const handleMouseMove = (moveEvent) => {
+                          const x = moveEvent.clientX - rect.left;
+                          const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                          const newYear = Math.round(1900 + (percentage / 100) * (2025 - 1900));
+                          setYearRange([Math.min(newYear, yearRange[1]), yearRange[1]]);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+                    
+                    {/* Max thumb */}
+                    <div
+                      className="absolute w-4 h-4 bg-red-600 border-2 border-white rounded-full shadow-md cursor-pointer transform -translate-y-1 hover:bg-red-700"
+                      style={{
+                        left: `${((yearRange[1] - 1900) / (2025 - 1900)) * 100}%`,
+                        transform: 'translateX(-50%) translateY(-25%)'
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                        const handleMouseMove = (moveEvent) => {
+                          const x = moveEvent.clientX - rect.left;
+                          const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                          const newYear = Math.round(1900 + (percentage / 100) * (2025 - 1900));
+                          setYearRange([yearRange[0], Math.max(newYear, yearRange[0])]);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
                     />
                   </div>
+                  
+                  {/* Year input fields */}
                   <div className="flex justify-between mt-2">
                     <input
                       type="number"
@@ -316,7 +309,6 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
         )}
       </form>
     </div>
-    </>
   );
 };
 
