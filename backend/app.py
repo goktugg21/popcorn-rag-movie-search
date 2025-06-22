@@ -295,7 +295,7 @@ def trope_filter_route():
 
     return jsonify(response), 200
 
-@app.route('/movies_with_trope', methods=['GET'])
+@app.route('/movies_with_trope', methods=['POST'])
 def movies_with_trope_route():
     """
     Endpoint to get movies with a specific character trope.
@@ -343,7 +343,41 @@ def search_movies():
     rating: float = data.get('rating')
 
     return jsonify(all_filters_combined(query, keyword, genres, year, director, rating)), 200
+
+@app.route('/get_favourites', methods=['GET'])
+def get_favourites():
+
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
     
+    with engine.connect() as connection:
+        stmt = select(Favourite).where(Favourite.user_id == user_id)
+        res = connection.execute(stmt)
+        favourites = res.fetchall()
+
+        if not favourites:
+            return jsonify([]), 200
+
+        response = []
+        for favourite in favourites:
+            movie_stmt = select(Movie).where(Movie.id == favourite.movie_id)
+            movie_res = connection.execute(movie_stmt).first()
+            if movie_res:
+                movie_data = {
+                    'id': movie_res.id,
+                    'imdb_id': movie_res.imdb_id,
+                    'original_title': movie_res.original_title,
+                    'popularity': movie_res.popularity,
+                    'overview': movie_res.text,
+                    'release_date': movie_res.release_date,
+                    'budget': movie_res.budget,
+                    'character_tropes': movie_res.character_tropes
+                }
+                response.append(movie_data)
+
+    return jsonify(response), 200
+
 if __name__ == '__main__':
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:

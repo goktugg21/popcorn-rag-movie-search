@@ -71,7 +71,7 @@ const Card = ({
                 className={`${layoutMode === 'horizontal' ? 'absolute h-full' : 'absolute h-full w-full'} object-cover transform transition-transform duration-500`}
                 style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
+                  e.target.src = 'https://placehold.co/400x300?text=Image+Not+Found';
                 }}
               />
               

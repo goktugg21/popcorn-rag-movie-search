@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import MovieCard from '../components/MovieCard';
 import api from '../utils/api';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const Home = () => {
+  // Set document title using our custom hook
+  useDocumentTitle('Home', true);
+  const navigate = useNavigate();
+  
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [categories, setCategories] = useState([
     { id: 1, name: 'Action', icon: '🔥', color: 'from-red-500 to-orange-500' },
@@ -19,60 +25,81 @@ const Home = () => {
   useEffect(() => {
     const fetchTrendingMovies = async () => {
       try {
-        // In a real app, you would call your API here
-        // const movies = await api.movies.getTrending();
-        // For now, let's use mock data
-        const mockMovies = [
-          {
-            id: 1,
-            imdb_id: 'tt1375666',
-            original_title: 'Inception',
-            overview: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
-            release_date: '2010-07-16',
-            vote_average: 8.8,
-            genres: 'Action, Sci-Fi, Thriller',
-            director: 'Christopher Nolan',
-            poster: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg'
-          },
-          {
-            id: 2,
-            imdb_id: 'tt0468569',
-            original_title: 'The Dark Knight',
-            overview: 'When the menace known as The Joker emerges from his mysterious past, he wreaks havoc and chaos on the people of Gotham.',
-            release_date: '2008-07-18',
-            vote_average: 9.0,
-            genres: 'Action, Crime, Drama',
-            director: 'Christopher Nolan',
-            poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg'
-          },
-          {
-            id: 3,
-            imdb_id: 'tt0816692',
-            original_title: 'Interstellar',
-            overview: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
-            release_date: '2014-11-07',
-            vote_average: 8.6,
-            genres: 'Adventure, Drama, Sci-Fi',
-            director: 'Christopher Nolan',
-            poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg'
-          },
-          {
-            id: 4,
-            imdb_id: 'tt1853728',
-            original_title: 'Django Unchained',
-            overview: 'With the help of a German bounty hunter, a freed slave sets out to rescue his wife from a brutal Mississippi plantation owner.',
-            release_date: '2012-12-25',
-            vote_average: 8.4,
-            genres: 'Western, Drama',
-            director: 'Quentin Tarantino',
-            poster: 'https://image.tmdb.org/t/p/w500/7oWLIGZFujUp0HMe2SuIDT6m1rh.jpg'
-          },
-        ];
-        setTrendingMovies(mockMovies);
+        // Try to fetch movies from the API first
+        try {
+          const data = await api.movies.getAllMovies({ limit: 8 });
+          
+          // Check if the response is an array or has a results property
+          let movieResults = [];
+          if (Array.isArray(data)) {
+            movieResults = data;
+          } else if (data && Array.isArray(data.results)) {
+            movieResults = data.results;
+          } else if (data && Array.isArray(data.movies)) {
+            movieResults = data.movies;
+          }
+          
+          console.log('Movies API response:', data);
+          console.log('Processed movie results:', movieResults);
+          
+          setTrendingMovies(movieResults);
+        } catch (apiError) {
+          console.error('API Error, falling back to mock data:', apiError);
+          
+          // Fallback to mock data if API fails
+          const mockMovies = [
+            {
+              id: 1,
+              imdb_id: 'tt1375666',
+              original_title: 'Inception',
+              overview: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
+              release_date: '2010-07-16',
+              vote_average: 8.8,
+              genres: 'Action, Sci-Fi, Thriller',
+              director: 'Christopher Nolan',
+              poster: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg'
+            },
+            {
+              id: 2,
+              imdb_id: 'tt0468569',
+              original_title: 'The Dark Knight',
+              overview: 'When the menace known as The Joker emerges from his mysterious past, he wreaks havoc and chaos on the people of Gotham.',
+              release_date: '2008-07-18',
+              vote_average: 9.0,
+              genres: 'Action, Crime, Drama',
+              director: 'Christopher Nolan',
+              poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg'
+            },
+            {
+              id: 3,
+              imdb_id: 'tt0816692',
+              original_title: 'Interstellar',
+              overview: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
+              release_date: '2014-11-07',
+              vote_average: 8.6,
+              genres: 'Adventure, Drama, Sci-Fi',
+              director: 'Christopher Nolan',
+              poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg'
+            },
+            {
+              id: 4,
+              imdb_id: 'tt1853728',
+              original_title: 'Django Unchained',
+              overview: 'With the help of a German bounty hunter, a freed slave sets out to rescue his wife from a brutal Mississippi plantation owner.',
+              release_date: '2012-12-25',
+              vote_average: 8.4,
+              genres: 'Western, Drama',
+              director: 'Quentin Tarantino',
+              poster: 'https://image.tmdb.org/t/p/w500/7oWLIGZFujUp0HMe2SuIDT6m1rh.jpg'
+            },
+          ];
+          setTrendingMovies(mockMovies);
+        }
+        
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching trending movies:', err);
-        setError('Failed to fetch trending movies');
+        console.error('Error in fetchTrendingMovies:', err);
+        setError('Failed to load movies. Please try refreshing the page.');
         setLoading(false);
       }
     };
@@ -208,6 +235,14 @@ const Home = () => {
               </svg>
               <p className="mt-2">{error}</p>
               <Button variant="primary" className="mt-4">Try Again</Button>
+            </div>
+          ) : (!trendingMovies || trendingMovies.length === 0) ? (
+            <div className="text-center text-yellow-600 dark:text-yellow-400 p-8 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+              <svg className="mx-auto h-12 w-12 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 4v12a1 1 0 001 1h8a1 1 0 001-1V8M7 8h10" />
+              </svg>
+              <p className="mt-2">No movies available at the moment</p>
+              <Button variant="primary" className="mt-4">Refresh</Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -365,6 +400,7 @@ const Home = () => {
               <Button 
                 variant="primary" 
                 className="text-lg py-3 px-8 bg-white text-blue-600 hover:bg-blue-50 shadow-xl"
+                onClick={() => navigate('/signup')}
               >
                 Sign Up for Free
               </Button>

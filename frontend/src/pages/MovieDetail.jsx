@@ -2,7 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../utils/api';
+import { isLoggedIn } from '../utils/auth';
 import Button from '../components/Button';
+import { withErrorBoundary } from '../components/ErrorBoundary';
+import { DetailSkeleton } from '../components/Skeletons';
+import { Spinner } from '../components/LoadingAnimations';
+import useDocumentTitle from '../hooks/useDocumentTitle';
+import { 
+  formatDate, 
+  formatCurrency, 
+  formatRuntime,
+  parseList,
+  safeString,
+  safeNumber,
+  safeArrayJoin
+} from '../utils/formatters';
 
 /**
  * Movie Detail page component
@@ -14,6 +28,14 @@ const MovieDetail = () => {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [showAddTropeModal, setShowAddTropeModal] = useState(false);
+  const [newTrope, setNewTrope] = useState('');
+  const [tropeLoading, setTropeLoading] = useState(false);
+  
+  // Dynamic document title based on movie title
+  useDocumentTitle(movie ? movie.title : 'Movie Details', true);
 
   // Fetch movie details when component mounts
   useEffect(() => {
@@ -24,6 +46,12 @@ const MovieDetail = () => {
         const params = id.startsWith('tt') ? { imdb_id: id } : { id: parseInt(id) };
         const data = await api.movies.getMovie(params);
         setMovie(data);
+        
+        // Check if movie is favorited after getting movie data
+        if (isLoggedIn() && data?.id) {
+          await checkIfFavorited(data.id);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching movie details:', err);
@@ -36,6 +64,41 @@ const MovieDetail = () => {
       fetchMovieDetails();
     }
   }, [id]);
+
+  // Check favorite status when authentication status might change
+  useEffect(() => {
+    if (movie?.id && isLoggedIn()) {
+      checkIfFavorited(movie.id);
+    } else {
+      setIsFavorited(false);
+    }
+  }, [movie?.id, isLoggedIn()]);
+
+  // Check if the current movie is in user's favorites
+  const checkIfFavorited = async (movieId) => {
+    if (!isLoggedIn()) {
+      setIsFavorited(false);
+      return;
+    }
+
+    try {
+      console.log('Checking if movie is favorited:', movieId);
+      const favorites = await api.favorites.getFavorites();
+      
+      if (Array.isArray(favorites)) {
+        const isFav = favorites.some(fav => 
+          fav.id == movieId || fav.movie_id == movieId
+        );
+        console.log('Movie is favorited:', isFav);
+        setIsFavorited(isFav);
+      } else {
+        setIsFavorited(false);
+      }
+    } catch (err) {
+      console.error('Error checking favorite status:', err);
+      setIsFavorited(false);
+    }
+  };
 
   // Animation variants
   const pageVariants = {
@@ -65,30 +128,92 @@ const MovieDetail = () => {
     navigate(-1); // Go back to previous page
   };
 
-  // Format release date
-  const formatReleaseDate = (dateString) => {
-    if (!dateString) return 'Unknown';
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+  // Handle add/remove favorites
+  const handleFavoriteToggle = async () => {
+    if (!movie?.id) return;
+    
+    // Check if user is logged in
+    if (!isLoggedIn()) {
+      navigate('/signin');
+      return;
+    }
+    
+    setFavoriteLoading(true);
+    try {
+      if (isFavorited) {
+        console.log('Removing from favorites:', movie.id);
+        await api.favorites.deleteFavorite(movie.id);
+        setIsFavorited(false);
+      } else {
+        console.log('Adding to favorites:', movie.id);
+        await api.favorites.addFavorite(movie.id);
+        setIsFavorited(true);
+      }
+      
+      // Re-check favorite status to ensure consistency
+      await checkIfFavorited(movie.id);
+      
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      
+      // If it's an auth error, redirect to login
+      if (err.status === 401 || err.status === 403) {
+        navigate('/signin');
+        return;
+      }
+      
+      // Show error to user
+      setError(`Failed to ${isFavorited ? 'remove from' : 'add to'} favorites. Please try again.`);
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
-  // Format runtime
-  const formatRuntime = (minutes) => {
-    if (!minutes) return 'Unknown';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+  // Handle add trope
+  const handleAddTrope = async () => {
+    if (!newTrope.trim() || !movie?.id) return;
+
+    // Check if user is logged in
+    if (!isLoggedIn()) {
+      navigate('/signin');
+      return;
+    }
+
+    setTropeLoading(true);
+    try {
+      await api.tropes.addTrope(newTrope.trim(), movie.id);
+      
+      // Refresh movie data to show new trope
+      const params = id.startsWith('tt') ? { imdb_id: id } : { id: parseInt(id) };
+      const updatedMovie = await api.movies.getMovie(params);
+      setMovie(updatedMovie);
+      
+      // Close modal and reset form
+      setShowAddTropeModal(false);
+      setNewTrope('');
+      
+    } catch (err) {
+      console.error('Error adding trope:', err);
+      
+      if (err.status === 401 || err.status === 403) {
+        navigate('/signin');
+        return;
+      }
+      
+      setError('Failed to add trope. Please try again.');
+    } finally {
+      setTropeLoading(false);
+    }
   };
 
-  // Format budget and revenue
-  const formatCurrency = (amount) => {
-    if (!amount) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
-    }).format(amount);
+  // Handle close trope modal
+  const handleCloseTropeModal = () => {
+    setShowAddTropeModal(false);
+    setNewTrope('');
+    setError(null);
   };
+
+  // Using utility functions from formatters.js instead of inline formatters
 
   return (
     <motion.div 
@@ -122,13 +247,17 @@ const MovieDetail = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-light"></div>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Spinner size="xl" color="primary" />
+            <p className="text-gray-500 dark:text-gray-400 animate-pulse">Loading movie details...</p>
+          </div>
         </div>
       ) : error ? (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
-          <Button variant="primary" className="mt-4" onClick={handleBack}>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center max-w-2xl mx-auto">
+          <div className="text-red-600 dark:text-red-400 text-lg mb-2">Error Loading Movie</div>
+          <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+          <Button variant="primary" className="mt-2" onClick={handleBack}>
             Go Back
           </Button>
         </div>
@@ -140,11 +269,11 @@ const MovieDetail = () => {
             <div className="md:w-1/3 lg:w-1/4">
               <div className="relative pb-[150%]">
                 <img 
-                  src={movie.poster} 
-                  alt={movie.original_title}
+                  src={`https://image.tmdb.org/t/p/w500/${movie.poster_path || ''}`}
+                  alt={movie.original_title || 'Movie poster'}
                   className="absolute h-full w-full object-cover"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/500x750?text=No+Image';
+                    e.target.src = 'https://placehold.co/500x750?text=No+Image';
                   }}
                 />
               </div>
@@ -158,21 +287,21 @@ const MovieDetail = () => {
                     {movie.original_title}
                   </h1>
                   
-                  {movie.tagline && (
-                    <p className="mt-2 text-lg italic text-gray-600 dark:text-gray-300">
-                      "{movie.tagline}"
-                    </p>
-                  )}
+                  <p className="mt-2 text-lg italic text-gray-600 dark:text-gray-300">
+                    {movie.tagline ? `"${movie.tagline}"` : ""}
+                  </p>
                 </div>
                 
-                {movie.vote_average && (
+                {movie.vote_average ? (
                   <div className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-3 py-2 rounded-full text-lg font-bold flex items-center">
                     <span className="mr-1">★</span> {movie.vote_average.toFixed(1)}
-                    {movie.vote_count && (
-                      <span className="ml-1 text-sm font-normal">
-                        ({movie.vote_count} votes)
-                      </span>
-                    )}
+                    <span className="ml-1 text-sm font-normal">
+                      ({safeNumber(movie.vote_count, 0)} votes)
+                    </span>
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-3 py-2 rounded-full text-lg font-bold flex items-center">
+                    <span className="mr-1">★</span> N/A
                   </div>
                 )}
               </div>
@@ -181,7 +310,7 @@ const MovieDetail = () => {
               <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div>
                   <span className="block text-gray-500 dark:text-gray-400">Release Date</span>
-                  <span className="font-medium text-gray-800 dark:text-white">{formatReleaseDate(movie.release_date)}</span>
+                  <span className="font-medium text-gray-800 dark:text-white">{formatDate(movie.release_date)}</span>
                 </div>
                 
                 {movie.runtime && (
@@ -191,20 +320,18 @@ const MovieDetail = () => {
                   </div>
                 )}
                 
-                {movie.director && (
-                  <div>
-                    <span className="block text-gray-500 dark:text-gray-400">Director</span>
-                    <span className="font-medium text-gray-800 dark:text-white">{movie.director}</span>
-                  </div>
-                )}
+                <div>
+                  <span className="block text-gray-500 dark:text-gray-400">Director</span>
+                  <span className="font-medium text-gray-800 dark:text-white">{safeString(movie.director)}</span>
+                </div>
               </div>
               
               {/* Genres */}
-              {movie.genres && (
-                <div className="mt-6">
-                  <div className="flex flex-wrap gap-2">
-                    {typeof movie.genres === 'string' ? 
-                      movie.genres.split(',').map((genre, index) => (
+              <div className="mt-6">
+                <div className="flex flex-wrap gap-2">
+                  {movie.genres ? (
+                    typeof movie.genres === 'string' ? 
+                      parseList(movie.genres).map((genre, index) => (
                         <span 
                           key={index}
                           className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium"
@@ -212,26 +339,35 @@ const MovieDetail = () => {
                           {genre.trim()}
                         </span>
                       )) :
-                      Array.isArray(movie.genres) && movie.genres.map((genre, index) => (
+                      Array.isArray(movie.genres) && movie.genres.length > 0 ? movie.genres.map((genre, index) => (
                         <span 
                           key={index}
                           className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium"
                         >
                           {genre}
                         </span>
-                      ))
-                    }
-                  </div>
+                      )) : (
+                        <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-sm font-medium">
+                          No genres listed
+                        </span>
+                      )
+                  ) : (
+                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-sm font-medium">
+                      No genres listed
+                    </span>
+                  )}
                 </div>
-              )}
+              </div>
               
               {/* Overview */}
-              {movie.overview && (
-                <div className="mt-6">
-                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Overview</h3>
+              <div className="mt-6">
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Overview</h3>
+                {movie.overview ? (
                   <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{movie.overview}</p>
-                </div>
-              )}
+                ) : (
+                  <p className="text-gray-400 dark:text-gray-500 italic">No overview available for this movie.</p>
+                )}
+              </div>
             </div>
           </div>
           
@@ -260,11 +396,23 @@ const MovieDetail = () => {
               </div>
               
               {/* Keywords or character tropes */}
-              {(movie.keywords || movie.character_tropes) && (
+              {(movie.keywords || movie.character_tropes) ? (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
-                    {movie.character_tropes ? 'Character Tropes' : 'Keywords'}
-                  </h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                      {movie.character_tropes ? 'Character Tropes' : 'Keywords'}
+                    </h3>
+                    {isLoggedIn() && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddTropeModal(true)}
+                        className="text-xs"
+                      >
+                        + Add Trope
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {movie.character_tropes && Array.isArray(movie.character_tropes) ? 
                       movie.character_tropes.map((trope, index) => (
@@ -284,6 +432,27 @@ const MovieDetail = () => {
                         </span>
                       ))
                     }
+                  </div>
+                </div>
+              ) : isLoggedIn() && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">
+                        Character Tropes
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Be the first to add character tropes for this movie!
+                      </p>
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => setShowAddTropeModal(true)}
+                      className="text-xs whitespace-nowrap"
+                    >
+                      + Add First Trope
+                    </Button>
                   </div>
                 </div>
               )}
@@ -322,11 +491,41 @@ const MovieDetail = () => {
                 </a>
               )}
               
-              <Button variant="primary" className="inline-flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-                Add to Favorites
+              <Button 
+                variant="primary" 
+                className={`inline-flex items-center gap-2 transition-all duration-200 ${
+                  isFavorited 
+                    ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' 
+                    : 'hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20'
+                }`}
+                onClick={handleFavoriteToggle}
+                disabled={favoriteLoading}
+              >
+                {favoriteLoading ? (
+                  <Spinner size="sm" color={isFavorited ? "white" : "primary"} />
+                ) : (
+                  <svg 
+                    className={`w-5 h-5 transition-colors ${
+                      isFavorited ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+                    }`} 
+                    fill={isFavorited ? "currentColor" : "none"} 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth="2" 
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+                    />
+                  </svg>
+                )}
+                {!isLoggedIn() 
+                  ? 'Sign in to Add to Favorites' 
+                  : isFavorited 
+                    ? 'Remove from Favorites' 
+                    : 'Add to Favorites'
+                }
               </Button>
             </div>
           </div>
@@ -339,8 +538,91 @@ const MovieDetail = () => {
           </Button>
         </div>
       )}
+
+      {/* Add Trope Modal */}
+      {showAddTropeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Add Character Trope
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  Add a character trope to "{movie?.original_title}"
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Character Trope:
+              </label>
+              <input
+                type="text"
+                value={newTrope}
+                onChange={(e) => setNewTrope(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g., Hero, Villain, Mentor, Antihero..."
+                disabled={tropeLoading}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !tropeLoading && newTrope.trim()) {
+                    handleAddTrope();
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Enter a character archetype or storytelling element
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleCloseTropeModal}
+                disabled={tropeLoading}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleAddTrope}
+                disabled={tropeLoading || !newTrope.trim()}
+                className="flex-1 flex items-center justify-center gap-2"
+              >
+                {tropeLoading ? (
+                  <>
+                    <Spinner size="sm" color="white" />
+                    Adding...
+                  </>
+                ) : (
+                  'Add Trope'
+                )}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 };
 
-export default MovieDetail;
+// Export with error boundary
+export default withErrorBoundary(MovieDetail);

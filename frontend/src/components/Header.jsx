@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DarkModeToggle from './DarkModeToggle';
 import Button from './Button';
+import { isLoggedIn, getUsername } from '../utils/auth';
 
 /**
  * Header component with responsive navigation and branding
@@ -12,7 +13,10 @@ import Button from './Button';
 const Header = ({ isDarkMode, toggleDarkMode }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userLoggedIn, setUserLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Track scroll position for header styling
   useEffect(() => {
@@ -25,61 +29,107 @@ const Header = ({ isDarkMode, toggleDarkMode }) => {
     };
   }, []);
 
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const loggedIn = isLoggedIn();
+      setUserLoggedIn(loggedIn);
+      if (loggedIn) {
+        setUsername(getUsername() || 'User');
+      }
+    };
+    
+    checkAuth();
+    
+    // Check auth status when location changes (e.g., after login/logout)
+    const intervalId = setInterval(checkAuth, 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [location]);
+
   // Toggle mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  // Handle profile click
+  const handleProfileClick = () => {
+    navigate('/user');
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-white/95 dark:bg-gray-900/95 shadow-md backdrop-blur-sm' : 'bg-transparent'
+      isScrolled 
+        ? 'bg-white/95 dark:bg-gray-900/95 shadow-lg backdrop-blur-md border-b border-gray-200 dark:border-gray-800' 
+        : 'bg-transparent'
     }`}>
-      <div className="container mx-auto px-4 py-3">
+      <div className="container mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo and Brand */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center">
+            <Link to="/" className="flex items-center group">
               <svg 
-                className="h-8 w-8 text-blue-600 dark:text-blue-500 mr-2" 
+                className="h-10 w-10 text-red-600 dark:text-red-500 mr-3 transform transition-transform duration-300 group-hover:scale-110" 
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                strokeWidth="1.5"
               >
-                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-                <line x1="7" y1="2" x2="7" y2="22"></line>
-                <line x1="17" y1="2" x2="17" y2="22"></line>
-                <line x1="2" y1="12" x2="22" y2="12"></line>
-                <line x1="2" y1="7" x2="7" y2="7"></line>
-                <line x1="2" y1="17" x2="7" y2="17"></line>
-                <line x1="17" y1="17" x2="22" y2="17"></line>
-                <line x1="17" y1="7" x2="22" y2="7"></line>
+                {/* Popcorn bucket */}
+                <path 
+                  d="M4,10 L4,22 L20,22 L20,10" 
+                  fill="#FFF" 
+                  stroke="currentColor" 
+                  strokeWidth="1.5"
+                />
+                <path 
+                  d="M2,10 L22,10" 
+                  stroke="currentColor" 
+                  strokeWidth="1.5"
+                />
+                <path 
+                  d="M4,10 L8,4 M12,6 L12,2 M20,10 L16,4" 
+                  stroke="currentColor" 
+                  strokeWidth="1.5"
+                />
+                <path 
+                  d="M8,10 C8,7 10,5.5 12,5.5 C14,5.5 16,7 16,10"
+                  stroke="currentColor" 
+                  fill="#FFDD66"
+                  strokeWidth="1.5"
+                />
+                {/* Striped pattern */}
+                <path 
+                  d="M6,13 H18 M6,17 H18" 
+                  stroke="currentColor" 
+                  strokeWidth="1"
+                  strokeOpacity="0.5"
+                />
               </svg>
-              <span className={`text-2xl font-bold ${
+              <span className={`text-2xl md:text-3xl font-bold tracking-tight ${
                 isScrolled ? 'text-gray-800 dark:text-white' : 'text-white'
-              }`}>
-                MovieDB
+              } transition-colors duration-300`}>
+                <span className="text-red-600 dark:text-red-500">Popcorn</span> not included
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex space-x-10">
             {[
               { name: 'Home', path: '/' },
-              { name: 'Movies', path: '/movies' },
-              { name: 'Categories', path: '/categories' },
-              { name: 'Favorites', path: '/favorites' },
-              { name: 'Card Examples', path: '/examples/cards' },
+              { name: 'Tropes', path: '/tropes' },
             ].map((item) => (
               <Link
                 key={item.name}
                 to={item.path}
-                className={`font-medium transition-colors hover:text-blue-600 ${
-                  location.pathname === item.path ? 'text-blue-600 dark:text-blue-400' : 
-                  isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'
+                className={`font-medium text-base transition-all duration-300 hover:text-red-600 dark:hover:text-red-400 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:transition-all after:duration-300 ${
+                  location.pathname === item.path 
+                    ? 'after:w-full after:bg-red-600 dark:after:bg-red-400 text-red-600 dark:text-red-400 font-semibold' 
+                    : isScrolled 
+                      ? 'text-gray-700 dark:text-gray-200 after:bg-red-600 dark:after:bg-red-400' 
+                      : 'text-white after:bg-white'
                 }`}
               >
                 {item.name}
@@ -89,19 +139,39 @@ const Header = ({ isDarkMode, toggleDarkMode }) => {
 
           {/* Right section: Auth + Dark Mode Toggle */}
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex space-x-2">
-              <Button 
-                variant={isScrolled ? "outline" : "glass"} 
-                size="sm"
-              >
-                Sign In
-              </Button>
-              <Button 
-                variant={isScrolled ? "primary" : "glass"} 
-                size="sm"
-              >
-                Sign Up
-              </Button>
+            <div className="hidden md:flex items-center space-x-2">
+              {userLoggedIn ? (
+                <button
+                  onClick={handleProfileClick}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white hover:text-gray-800'
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">
+                      {username.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="hidden lg:block">{username}</span>
+                </button>
+              ) : (
+                <>
+                  <Button 
+                    variant={isScrolled ? "outline" : "glass"} 
+                    size="sm"
+                    onClick={() => navigate('/signin')}
+                  >
+                    Sign In
+                  </Button>
+                  <Button 
+                    variant={isScrolled ? "primary" : "glass"} 
+                    size="sm"
+                    onClick={() => navigate('/signup')}
+                  >
+                    Sign Up
+                  </Button>
+                </>
+              )}
             </div>
             <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
             
@@ -140,10 +210,7 @@ const Header = ({ isDarkMode, toggleDarkMode }) => {
             <nav className="flex flex-col space-y-4 pb-4">
               {[
                 { name: 'Home', path: '/' },
-                { name: 'Movies', path: '/movies' },
-                { name: 'Categories', path: '/categories' },
-                { name: 'Favorites', path: '/favorites' },
-                { name: 'Card Examples', path: '/examples/cards' },
+                { name: 'Tropes', path: '/tropes' },
               ].map((item) => (
                 <Link
                   key={item.name}
@@ -158,8 +225,47 @@ const Header = ({ isDarkMode, toggleDarkMode }) => {
                 </Link>
               ))}
               <div className="flex space-x-2 pt-2">
-                <Button variant="outline" size="sm" fullWidth>Sign In</Button>
-                <Button variant="primary" size="sm" fullWidth>Sign Up</Button>
+                {userLoggedIn ? (
+                  <Button 
+                    variant="primary" 
+                    size="sm" 
+                    fullWidth
+                    onClick={handleProfileClick}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <div className="w-6 h-6 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">
+                        {username.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    {username}
+                  </Button>
+                ) : (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      fullWidth
+                      onClick={() => {
+                        navigate('/signin');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      fullWidth
+                      onClick={() => {
+                        navigate('/signup');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign Up
+                    </Button>
+                  </>
+                )}
               </div>
             </nav>
           </div>

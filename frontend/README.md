@@ -1,6 +1,6 @@
-# React Vite Project with TailwindCSS
+# Popcorn not included
 
-This project is a modern React application built with Vite and TailwindCSS. It includes a structured project layout with separate folders for pages, components, hooks, and utilities.
+Popcorn not included is a modern movie discovery application built with React, Vite, and TailwindCSS. Browse, search, and explore your favorite movies with a beautiful and responsive interface. This project includes a structured project layout with separate folders for pages, components, hooks, and utilities.
 
 ## Project Structure
 

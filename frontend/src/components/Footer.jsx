@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand and Description */}
           <div className="col-span-1 md:col-span-2 lg:col-span-1">
-            <h3 className="text-2xl font-bold text-white mb-4">MovieDB</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">Popcorn not included</h3>
             <p className="mb-4 text-gray-400">
               Your ultimate destination for movie discovery, recommendations, and tracking your favorites.
             </p>
@@ -78,7 +78,7 @@ const Footer = () => {
         
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p>&copy; {currentYear} MovieDB. All rights reserved.</p>
+            <p>&copy; {currentYear} Popcorn not included. All rights reserved.</p>
             <div className="mt-4 md:mt-0">
               <ul className="flex flex-wrap space-x-4">
                 <li><a href="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">Terms</a></li>

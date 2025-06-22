@@ -16,7 +16,7 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
   
   // Filter states
   const [genre, setGenre] = useState('');
-  const [year, setYear] = useState('');
+  const [yearRange, setYearRange] = useState([1900, 2025]);
   const [rating, setRating] = useState('');
   const [director, setDirector] = useState('');
 
@@ -31,7 +31,7 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
         query,
         filters: {
           genre: genre || undefined,
-          year: year || undefined,
+          year: yearRange[0] !== 1900 || yearRange[1] !== 2025 ? `${yearRange[0]}-${yearRange[1]}` : undefined,
           rating: rating || undefined,
           director: director || undefined,
         }
@@ -52,7 +52,50 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
   };
 
   return (
-    <div className="w-full max-w-3xl">
+    <>
+      <style>{`
+        /* Custom range slider styles */
+        .slider-thumb-blue::-webkit-slider-thumb {
+          appearance: none;
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .slider-thumb-red::-webkit-slider-thumb {
+          appearance: none;
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: #ef4444;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .slider-thumb-blue::-moz-range-thumb,
+        .slider-thumb-red::-moz-range-thumb {
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .slider-thumb-blue::-moz-range-thumb {
+          background: #3b82f6;
+        }
+        
+        .slider-thumb-red::-moz-range-thumb {
+          background: #ef4444;
+        }
+      `}</style>
+      <div className="w-full max-w-3xl">
       {/* Search mode toggle */}
       <div className="flex justify-end mb-2">
         <div className="inline-flex rounded-md shadow-sm" role="group">
@@ -168,29 +211,70 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
                 </select>
               </div>
 
-              {/* Year dropdown */}
+              {/* Year Range Slider */}
               <div>
-                <label htmlFor="year" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Release Year
+                <label htmlFor="yearRange" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Release Year Range
                 </label>
-                <select
-                  id="year"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-primary-light focus:border-primary-light dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  <option value="">Any Year</option>
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
-                  <option value="2023">2023</option>
-                  <option value="2022">2022</option>
-                  <option value="2021">2021</option>
-                  <option value="2020">2020</option>
-                  <option value="2010s">2010s</option>
-                  <option value="2000s">2000s</option>
-                  <option value="1990s">1990s</option>
-                  <option value="1980s">1980s</option>
-                </select>
+                <div className="px-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{yearRange[0]}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{yearRange[1]}</span>
+                  </div>
+                  <div className="relative">
+                    {/* Min Year Slider */}
+                    <input
+                      type="range"
+                      min="1900"
+                      max="2025"
+                      value={yearRange[0]}
+                      onChange={(e) => {
+                        const newMin = parseInt(e.target.value);
+                        setYearRange([Math.min(newMin, yearRange[1]), yearRange[1]]);
+                      }}
+                      className="absolute w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-thumb-blue"
+                      style={{ zIndex: 1 }}
+                    />
+                    {/* Max Year Slider */}
+                    <input
+                      type="range"
+                      min="1900"
+                      max="2025"
+                      value={yearRange[1]}
+                      onChange={(e) => {
+                        const newMax = parseInt(e.target.value);
+                        setYearRange([yearRange[0], Math.max(newMax, yearRange[0])]);
+                      }}
+                      className="absolute w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-thumb-red"
+                      style={{ zIndex: 2 }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-2">
+                    <input
+                      type="number"
+                      min="1900"
+                      max="2025"
+                      value={yearRange[0]}
+                      onChange={(e) => {
+                        const newMin = parseInt(e.target.value) || 1900;
+                        setYearRange([Math.min(newMin, yearRange[1]), yearRange[1]]);
+                      }}
+                      className="w-20 px-2 py-1 text-xs rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-400 self-center">to</span>
+                    <input
+                      type="number"
+                      min="1900"
+                      max="2025"
+                      value={yearRange[1]}
+                      onChange={(e) => {
+                        const newMax = parseInt(e.target.value) || 2025;
+                        setYearRange([yearRange[0], Math.max(newMax, yearRange[0])]);
+                      }}
+                      className="w-20 px-2 py-1 text-xs rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Rating dropdown */}
@@ -232,6 +316,7 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
         )}
       </form>
     </div>
+    </>
   );
 };
 
