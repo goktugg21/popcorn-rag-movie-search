@@ -194,8 +194,20 @@ def get_movie():
             'overview': result.get('text'),
             'release_date': result['release_date'],
             'budget': result['budget'],
+            'character_tropes': result.get('character_tropes'),
+            'revenue': result.get('revenue'),
+            'cast': result.get('stars'),
+            'homepage': result.get('homepage'),
+            'director': result.get('director'),
+            'tagline': result.get('tagline'),
+            'keywords': result.get('keywords'),
+            'runtime': result.get('runtime'),
+            'genres': result.get('genres'),
+            'release_date': result.get('release_date'),
+            'vote_count': result.get('vote_count'),
+            'vote_average': result.get('vote_average'),
+            'release_year': result.get('release_year'),
             'character_tropes': result.get('character_tropes')
-            
         }, 200
 
 @app.route('/add_favourite', methods=['POST'])
