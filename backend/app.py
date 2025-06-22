@@ -142,7 +142,6 @@ def check_login() -> Tuple[Optional[int], Optional[str], int]:
     
 @app.route('/logout', methods=['GET'])
 def logout():
-
     response = make_response('Logged out successfully')
     response.set_cookie('token', '', expires=0, httponly=True, secure=True, samesite='Lax')
     return response, 200
@@ -316,7 +315,7 @@ def movies_with_trope_route():
         return jsonify({"message": "No movies found with the specified trope"}), 404
     return jsonify(response), 200
 
-@app.get('/search')
+@app.route('/search', methods=['POST'])
 def search_movies():
     """
     Endpoint to search for movies with various filters.
