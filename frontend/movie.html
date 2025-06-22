@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="movie-details-body">
+    <div class="movie-details-container">
+        <div class="movie-header">
+            <div class="movie-main-info">
+                <h1 id="movie-title" class="movie-title">Movie Title Placeholder</h1>
+                <h2 id="modal-movie-title" style="margin-top:0;font-size:1.3em;color:#7c3aed;"></h2>
+                <div class="movie-key-info">
+                    <span id="movie-year" class="movie-tag">2024</span>
+                    <span id="movie-rating" class="movie-tag">⭐ 8.5</span>
+                    <span id="movie-runtime" class="movie-tag">120 min</span>
+                    <span id="movie-popularity" class="movie-tag">🔥 1234</span>
+                </div>
+                <div id="movie-genres" class="movie-genres">
+                    <span class="genre-tag">Action</span>
+                    <span class="genre-tag">Adventure</span>
+                </div>
+                <div class="movie-actions">
+                    <button class="purple-btn">Add to Favorites</button>
+                    <a id="trailer-link" href="#" target="_blank" class="purple-btn outline">Watch Trailer</a>
+                </div>
+            </div>
+        </div>
+        <div class="movie-overview-section">
+            <h2>Overview</h2>
+            <p id="movie-overview">This is a placeholder for the movie description. If no overview is available, this text will be shown.</p>
+        </div>
+        <div class="movie-credits-section">
+            <div class="credit-list">
+                <h3>Director</h3>
+                <ul id="movie-director">
+                    <li>Director Name</li>
+                </ul>
+            </div>
+            <div class="credit-list">
+                <h3>Writers</h3>
+                <ul id="movie-writers">
+                    <li>Writer 1</li>
+                    <li>Writer 2</li>
+                </ul>
+            </div>
+            <div class="credit-list">
+                <h3>Stars</h3>
+                <ul id="movie-stars">
+                    <li>Star 1</li>
+                    <li>Star 2</li>
+                </ul>
+            </div>
+        </div>
+        <div class="movie-meta-section">
+            <span id="movie-vote-count">Votes: 12345</span>
+            <span id="movie-additional-meta"></span>
+        </div>
+    </div>
+    <script src="movie.js"></script>
+</body>
+</html>

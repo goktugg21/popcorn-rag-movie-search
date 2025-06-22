@@ -253,6 +253,40 @@ def delete_favourite():
 
     return 'Favourite deleted successfully', 200
 
+@app.route('/get_favourites', methods=['GET'])
+def get_favourites():
+
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    with engine.connect() as connection:
+        stmt = select(Favourite).where(Favourite.user_id == user_id)
+        res = connection.execute(stmt)
+        favourites = res.fetchall()
+
+        if not favourites:
+            return jsonify([]), 200
+
+        response = []
+        for favourite in favourites:
+            movie_stmt = select(Movie).where(Movie.id == favourite.movie_id)
+            movie_res = connection.execute(movie_stmt).first()
+            if movie_res:
+                movie_data = {
+                    'id': movie_res.id,
+                    'imdb_id': movie_res.imdb_id,
+                    'original_title': movie_res.original_title,
+                    'popularity': movie_res.popularity,
+                    'overview': movie_res.text,
+                    'release_date': movie_res.release_date,
+                    'budget': movie_res.budget,
+                    'character_tropes': movie_res.character_tropes
+                }
+                response.append(movie_data)
+
+        return jsonify(response), 200
+
 @app.route('/add_trope', methods=['POST'])
 def add_trope_route():
     """

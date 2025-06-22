@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile | Movie App</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+    .profile-root {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      background: #f3f4f6;
+      padding: 0;
+    }
+    .profile-container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(124,58,237,0.10);
+      padding: 32px 24px 32px 24px;
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      min-height: 70vh;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    .profile-user {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .profile-username {
+      font-size: 2rem;
+      color: #7c3aed;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .profile-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 0;
+    }
+    .btn {
+      padding: 10px 22px;
+      border-radius: 7px;
+      font-size: 1.08rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+      box-shadow: 0 1px 4px rgba(124,58,237,0.06);
+    }
+    .btn-logout {
+      background: #ede9fe;
+      color: #7c3aed;
+      border: 2px solid #7c3aed;
+    }
+    .btn-logout:hover {
+      background: #7c3aed;
+      color: #fff;
+    }
+    .btn-delete {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 2px solid #b91c1c;
+    }
+    .btn-delete:hover {
+      background: #b91c1c;
+      color: #fff;
+    }
+    .favourites-section {
+      margin-top: 12px;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .favourites-title {
+      color: #5b21b6;
+      font-size: 1.25rem;
+      margin-bottom: 18px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .favourites-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    .favourite-card {
+      background: #f3e8ff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(124,58,237,0.07);
+      padding: 18px 16px 14px 16px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 14px;
+      min-height: 80px;
+      transition: box-shadow 0.18s, background 0.18s;
+    }
+    .favourite-thumb {
+      width: 48px;
+      height: 68px;
+      border-radius: 7px;
+      background: #e0e7ff;
+      object-fit: cover;
+      box-shadow: 0 1px 4px rgba(124,58,237,0.10);
+      flex-shrink: 0;
+      display: block;
+    }
+    .favourite-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .favourite-title {
+      color: #7c3aed;
+      font-size: 1.08rem;
+    }
+    .favourite-meta { color: #444; font-size: 0.98em; }
+    .delete-popup {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(55, 65, 81, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .delete-popup-content {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.13);
+      padding: 32px 24px 18px 24px;
+      min-width: 320px;
+      max-width: 90vw;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+    }
+    .delete-popup-content label {
+      font-size: 1.08em;
+      color: #b91c1c;
+      margin-bottom: 6px;
+    }
+    .delete-popup-content input[type="password"] {
+      padding: 10px 12px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 7px;
+      font-size: 1.05em;
+      margin-bottom: 10px;
+      background: #f3f4f6;
+      transition: border 0.18s, background 0.18s;
+      min-width: 0;
+    }
+    .delete-popup-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .delete-popup-btn {
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+    }
+    .delete-popup-btn.confirm {
+      background: #b91c1c;
+      color: #fff;
+    }
+    .delete-popup-btn.cancel {
+      background: #ede9fe;
+      color: #7c3aed;
+    }
+    .delete-popup-btn.confirm:disabled {
+      background: #fca5a5;
+      color: #fff;
+      cursor: not-allowed;
+    }
+    @media (max-width: 700px) {
+      .profile-container { padding: 16px 2vw 18px 2vw; }
+      .profile-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .profile-actions { margin-top: 12px; }
+    }
+    @media (max-width: 480px) {
+      .profile-container { padding: 6px 0 10px 0; }
+      .profile-username { font-size: 1.2rem; }
+      .favourites-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-root">
+    <div class="profile-container">
+      <div class="profile-header">
+        <div class="profile-user">
+          <span class="profile-username" id="profile-username">Welcome, ...</span>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-logout" id="logout-btn">Logout</button>
+          <button class="btn btn-delete" id="delete-account-btn">Delete Account</button>
+        </div>
+      </div>
+      <div class="favourites-section">
+        <div class="favourites-title">Your Favorite Movies</div>
+        <ul class="favourites-list" id="favourites-list"></ul>
+      </div>
+    </div>
+  </div>
+  <div id="delete-popup" class="delete-popup" style="display:none;">
+    <div class="delete-popup-content">
+      <label for="delete-password">Enter your password to confirm account deletion:</label>
+      <input type="password" id="delete-password" placeholder="Password" autocomplete="current-password">
+      <div id="delete-error" style="color:#b91c1c;font-size:0.98em;min-height:1.2em;"></div>
+      <div class="delete-popup-actions">
+        <button class="delete-popup-btn cancel" id="cancel-delete-btn">Cancel</button>
+        <button class="delete-popup-btn confirm" id="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    let username = localStorage.getItem('username') || '';
+    let favoriteMovies = [];
+
+    async function loadUserProfile() {
+      if (!username) {
+        document.getElementById('profile-username').textContent = 'Welcome, (not logged in)!';
+        document.getElementById('favourites-list').innerHTML = '<li style="color:#888;font-size:1.05em;">You are not logged in.</li>';
+        return;
+      }
+      // Try to get favourites and infer login state
+      const res = await fetch('/get_favourites', { credentials: 'include' });
+      if (res.status === 401) {
+        window.location.href = '/';
+        return;
+      }
+      favoriteMovies = await res.json();
+      document.getElementById('profile-username').textContent = `Welcome, ${username}!`;
+      renderFavourites();
+    }
+
+    function renderFavourites() {
+      const list = document.getElementById('favourites-list');
+      list.innerHTML = '';
+      if (!favoriteMovies.length) {
+        list.innerHTML = '<li style="color:#888;font-size:1.05em;">No favorites yet.</li>';
+      } else {
+        favoriteMovies.forEach(movie => {
+          const li = document.createElement('li');
+          li.className = 'favourite-card';
+          li.innerHTML = `
+            <div class="favourite-info">
+              <div class="favourite-title">${movie.original_title || movie.title || 'Untitled'}</div>
+              <div class="favourite-meta">${movie.release_date ? 'Release: ' + movie.release_date : ''}</div>
+            </div>
+          `;
+          list.appendChild(li);
+        });
+      }
+    }
+
+    document.getElementById('logout-btn').onclick = async () => {
+      await fetch('/logout', { credentials: 'include' });
+      localStorage.removeItem('username');
+      window.location.href = '/';
+    };
+
+    // Delete account logic with custom popup
+    const deleteBtn = document.getElementById('delete-account-btn');
+    const deletePopup = document.getElementById('delete-popup');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const deletePasswordInput = document.getElementById('delete-password');
+    const deleteError = document.getElementById('delete-error');
+
+    deleteBtn.onclick = () => {
+      deletePasswordInput.value = '';
+      deleteError.textContent = '';
+      deletePopup.style.display = 'flex';
+      deletePasswordInput.focus();
+    };
+    cancelDeleteBtn.onclick = () => {
+      deletePopup.style.display = 'none';
+      deletePasswordInput.value = '';
+      deleteError.textContent = '';
+    };
+    confirmDeleteBtn.onclick = async () => {
+      const password = deletePasswordInput.value;
+      if (!password) {
+        deleteError.textContent = 'Password required.';
+        return;
+      }
+      confirmDeleteBtn.disabled = true;
+      deleteError.textContent = '';
+      const res = await fetch('/delete_account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+      confirmDeleteBtn.disabled = false;
+      if (res.ok) {
+        localStorage.removeItem('username');
+        window.location.href = '/';
+      } else {
+        deleteError.textContent = 'Failed to delete account. Please check your password.';
+      }
+    };
+
+    loadUserProfile();
+  </script>
+</body>
+</html>

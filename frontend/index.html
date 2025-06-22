@@ -2,23 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Explorer</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Movie Explorer</h1>
-        <div id="sections">
-            <button class="section-btn" id="ai-search">AI Search</button>
-            <button class="section-btn" id="normal-search">Normal Search</button>
-            <button class="section-btn" id="trope-search">Trope Search</button>
-            <button class="section-btn" id="register">User Registration</button>
-            <button class="section-btn" id="login">User Login</button>
-            <button class="section-btn" id="logout" style="display:none;">Logout</button>
-            <button class="section-btn" id="favourites" style="display:none;">User Favourites</button>
+    <div class="center-vertical">
+        <div class="center-container">
+            <h1 class="main-title">Movie search engine</h1>
+            <div class="search-bar-container">
+                <button id="filters-btn" class="filters-btn">Filters</button>
+                <input type="text" id="search-input" placeholder="Search movies or ask AI...">
+                <button id="search-btn" class="accent">🔍</button>
+                <button id="ai-search-btn" class="ai-btn">AI Search</button>
+                <button id="trope-search-btn" class="trope-btn">Trope Search</button>
+            </div>
+            <div id="filters-modal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="close" id="close-filters-modal">&times;</span>
+                    <form id="filters-form">
+                        <label>Year (interval or single, e.g. 2000,2010): <input type="text" id="filter-year" placeholder="e.g. 2020 or 2000,2010"></label>
+                        <label>Genres (comma separated): <input type="text" id="filter-genre" placeholder="e.g. Action,Comedy"></label>
+                        <label>Keywords (comma separated): <input type="text" id="filter-name" placeholder="e.g. Inception,Matrix"></label>
+                        <label>Director(s) (comma separated): <input type="text" id="filter-director" placeholder="e.g. Nolan,Spielberg"></label>
+                        <label>Rating: <input type="text" id="filter-rating" placeholder="e.g. 7.5"></label>
+                        <!-- <label>Character Trope(s) (comma separated): <input type="text" id="filter-trope" placeholder="e.g. Rebel,Hero"></label> -->
+                        <button type="submit">Apply Filters</button>
+                    </form>
+                    <div class="examples">
+                        <h4>Examples:</h4>
+                        <ul>
+                            <li><b>Year:</b> <code>2010</code> or <code>2000,2010</code></li>
+                            <li><b>Genres:</b> <code>Action,Comedy</code></li>
+                            <li><b>Keywords:</b> <code>Inception,Matrix</code></li>
+                            <li><b>Director:</b> <code>Nolan,Spielberg</code></li>
+                            <li><b>Rating:</b> <code>8.0</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div id="movie-modal" class="movie-modal hidden">
+                <div class="movie-modal-content">
+                    <span class="close" id="close-movie-modal">&times;</span>
+                    <div class="movie-modal-header">
+                        <h2 id="modal-movie-title"></h2>
+                        <div class="movie-key-info" id="modal-movie-key-info"></div>
+                    </div>
+                    <div class="movie-modal-body">
+                        <div class="movie-modal-details">
+                            <div id="modal-movie-genres"></div>
+                            <div id="modal-movie-overview" style="margin:8px 0 6px 0;font-size:0.98em;color:#444;"></div>
+                            <div><strong>Director:</strong> <span id="modal-movie-director"></span></div>
+                            <div><strong>Writers:</strong> <span id="modal-movie-writers"></span></div>
+                            <div><strong>Stars:</strong> <span id="modal-movie-stars"></span></div>
+                            <div><strong>Keywords:</strong> <span id="modal-movie-keywords"></span></div>
+                            <div id="modal-movie-extra"></div>
+                        </div>
+                    </div>
+                    <button id="add-favourite-btn" class="purple-btn">Add to Favourites</button>
+                </div>
+            </div>
+            <div class="profile-container">
+                <button id="profile-btn" class="profile-btn" title="User Profile">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M16 20v-2a4 4 0 0 0-8 0v2"/></svg>
+                </button>
+            </div>
+            <div id="user-modal" class="modal hidden">
+                <div class="modal-content user-modal-content">
+                    <span class="close" id="close-user-modal">&times;</span>
+                    <h2 id="user-modal-title" style="margin-bottom:16px;color:#7c3aed;">User Login</h2>
+                    <form id="login-form" class="user-auth-form">
+                        <label for="login-username">Username:</label>
+                        <input type="text" id="login-username" autocomplete="username" required>
+                        <label for="login-password">Password:</label>
+                        <input type="password" id="login-password" autocomplete="current-password" required>
+                        <button type="submit" class="purple-btn">Log In</button>
+                        <div id="login-error" class="user-auth-error"></div>
+                    </form>
+                    <form id="register-form" class="user-auth-form" style="display:none;">
+                        <label for="register-username">Username:</label>
+                        <input type="text" id="register-username" autocomplete="username" required>
+                        <label for="register-password">Password:</label>
+                        <input type="password" id="register-password" autocomplete="new-password" required>
+                        <button type="submit" class="purple-btn">Register</button>
+                        <div id="register-error" class="user-auth-error"></div>
+                    </form>
+                    <div id="register-link-container" style="margin-top:18px;text-align:center;font-size:0.98em;color:#444;">
+                        or <span id="register-link" style="color:#7c3aed;cursor:pointer;text-decoration:underline;">register account here</span>
+                    </div>
+                </div>
+            </div>
+            <div id="results-list" class="results-list"></div>
         </div>
-        <div id="message"></div>
     </div>
-    <script src="app.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
