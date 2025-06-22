@@ -1,4 +1,7 @@
+# frontend - Laetitia
+for my frontend to work you neeed to go to http://localhost:5000/ and run the command python app.py.
 
+the frontend doesn t have to be opened separately 
 
 # Structure
 Models <- Create models for sqlalchemy
