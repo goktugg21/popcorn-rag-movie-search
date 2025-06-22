@@ -77,7 +77,7 @@ def create_index(docs: list[Document] = None) -> None:
 
     # Set the settings for llamaIndex
     Settings.llm = Ollama(
-        model="mistral-nemo:latest",
+        model="llama3.2:latest",
         request_timeout=120.0,
         context_window=8000,
     )
@@ -124,7 +124,7 @@ def getQEngine() -> BaseQueryEngine:
         base_url="http://localhost:11434",
     )
     Settings.llm = Ollama(
-        model="mistral-nemo:latest",
+        model="llama3.2:latest",
         request_timeout=120.0,
         context_window=8000,
     )

@@ -3,19 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
+    <title>Movie Explorer</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
         <div class="logo">
-            <!-- Replace src with your logo file if available -->
-            <img src="logo.png" alt="Website Logo" />
+            <img src="logo.png" alt="Movie Explorer Logo" />
         </div>
     </header>
-    <main>
-        <h1>Welcome to My Website</h1>
-        <p>This is a simple, clear frontend with a dark background.</p>
+    <main class="start-page">
+        <div class="hero-section">
+            <h1>Discover Your Next Favorite Movie</h1>
+            <p class="hero-subtitle">Explore thousands of movies with AI-powered recommendations and smart filtering</p>
+            <div class="action-cards">
+                <div class="card login-card">
+                    <div class="card-icon">👤</div>
+                    <h3>Login</h3>
+                    <p>Access your favorites and personalized recommendations</p>
+                    <button class="btn btn-primary" onclick="showLogin()">Sign In</button>
+                </div>
+                <div class="card ai-search-card">
+                    <div class="card-icon">🤖</div>
+                    <h3>AI Search</h3>
+                    <p>Find movies using natural language descriptions</p>
+                    <button class="btn btn-secondary" onclick="showAISearch()">Start AI Search</button>
+                </div>
+                <div class="card filter-search-card">
+                    <div class="card-icon">🔍</div>
+                    <h3>Filtered Search</h3>
+                    <p>Browse movies by genre, year, rating, and more</p>
+                    <button class="btn btn-secondary" onclick="showFilterSearch()">Browse Movies</button>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('loginModal')">&times;</span>
+            <h2>Login</h2>
+            <form class="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            <p class="signup-link">Don't have an account? <a href="#" onclick="showSignup()">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('signupModal')">&times;</span>
+            <h2>Sign Up</h2>
+            <form class="signup-form">
+                <div class="form-group">
+                    <label for="signup-username">Username</label>
+                    <input type="text" id="signup-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+            </form>
+            <p class="login-link">Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+        </div>
+    </div>
+
+    <!-- AI Search Modal -->
+    <div id="aiSearchModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('aiSearchModal')">&times;</span>
+            <h2>AI Movie Search</h2>
+            <p>Describe the type of movie you're looking for...</p>
+            <form class="ai-search-form">
+                <div class="form-group">
+                    <textarea id="aiQuery" placeholder="e.g., 'A sci-fi movie about time travel with a happy ending' or 'Romantic comedy set in Paris'" rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Search Movies</button>
+            </form>
+            <div id="aiSearchResults" class="search-results"></div>
+        </div>
+    </div>
+
+    <!-- Filter Search Modal -->
+    <div id="filterSearchModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('filterSearchModal')">&times;</span>
+            <h2>Filtered Movie Search</h2>
+            <form class="filter-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="genre">Genre</label>
+                        <input type="text" id="genre" name="genres" placeholder="e.g. Comedy, Action">
+                    </div>
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" name="year" placeholder="e.g. 2023">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rating">Min Rating</label>
+                        <input type="number" id="rating" name="rating" min="0" max="10" step="0.1" placeholder="e.g. 7.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="director">Director</label>
+                        <input type="text" id="director" name="director" placeholder="e.g. Nolan">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="keyword">Keyword</label>
+                        <input type="text" id="keyword" name="keyword" placeholder="e.g. time travel">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Search Movies</button>
+            </form>
+            <div id="filterSearchResults" class="search-results"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
-</html> 
+</html>

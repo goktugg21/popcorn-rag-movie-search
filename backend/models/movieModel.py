@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column, String, Float, BigInteger, Integer, Date, Text, JSON
 )
 from sqlalchemy.ext.declarative import declarative_base
-from pgvector.sqlalchemy import VECTOR
+import pgvector.sqlalchemy
 from models.Base import Base
 import os
 
@@ -15,7 +15,7 @@ class Movie(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     node_id = Column(String)
-    embedding = Column(VECTOR(768)) 
+    embedding = Column(pgvector.sqlalchemy.Vector(768)) 
     text = Column(Text)
     metadata_ = Column(JSON)
     imdb_id = Column(String)

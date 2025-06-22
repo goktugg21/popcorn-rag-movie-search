@@ -123,9 +123,9 @@ def genre_filter(*genres: str) -> Dict[str, any]:
     raises: 
         ValueError if validation fails
     """
-    # validating input parameters before processing
+    # If no genres provided, return empty dict (for flexible search)
     if len(genres) == 0:
-        raise ValueError("at least one genre required")
+        return {}
     if len(genres) > 5:
         raise ValueError("maximum 5 genres allowed")
      
@@ -282,9 +282,9 @@ def keyword_filter(*keywords: str)->Dict[str, any]:
     raises:
         ValueError if validation fails
     """
-    # validating input parameters
+    # If no keywords provided, return empty dict (for flexible search)
     if len(keywords) == 0:
-        raise ValueError("at least one keyword required")
+        return {}
     if len(keywords) > 5:
         raise ValueError("maximum 5 keywords allowed")
        
@@ -314,7 +314,7 @@ def keyword_filter(*keywords: str)->Dict[str, any]:
     finally:
         session.close()
 
-def all_filters_combined(query: str,keywords: List[str] = [],
+def all_filters_combined(query: str = "", keywords: List[str] = [],
                           genres: List[str] = [],
                           year: List[int] = [],
                           director: str = "",
@@ -323,51 +323,42 @@ def all_filters_combined(query: str,keywords: List[str] = [],
     """
     Apply multiple movie filters and return movies that match ALL criteria.
     Results sorted by rating (highest first), limited to 150 movies.
-    
-    Args:
-        keywords (List[str], optional): Keywords to search (max 5). Example: ["monster", "island"]
-        genres (List[str], optional): Genres to filter by (max 5). Example: ["Action", "Comedy"]
-        year (List[int], optional): [year] or [start_year, end_year]. Example: [1999] or [2000, 2010]
-        director (str, optional): Director name (min 3 chars). Example: "christopher nolan"
-        rating (float, optional): Minimum rating 0.0-10.0. Example: 7.5
-    
-    Returns:
-        Dict[str, any]: Movie IDs as keys, movie data as values containing:
-            id, title, release_year, vote_average, vote_count, runtime, genres, director,
-            hidden_details (stars, keywords, production_companies, tagline, overview, etc.)
-    
-    Raises:
-        ValueError: If no parameters provided, invalid year format, or too many keywords/genres
     """
-    
     # getting results from each filter
     filter_results = []
     all_movie_data = {}  # collecting all movie data from all filters
-    
-    if not query:
-        raise ValueError("query parameter cannot be empty")
-    
-    query_results = query_filter(query)
-    filter_results.append(set(query_results.keys()))
-    all_movie_data.update(query_results)
-    
-     # applying keyword filter if provided
+
+    # Convert year values to int if they are not already
+    year_int = []
+    for y in year:
+        try:
+            year_int.append(int(y))
+        except Exception:
+            continue
+
+    # Only require query if it's actually provided
+    if query:
+        query_results = query_filter(query)
+        filter_results.append(set(query_results.keys()))
+        all_movie_data.update(query_results)
+
+    # applying keyword filter if provided
     if keywords:
         keyword_movies = keyword_filter(*keywords)
         filter_results.append(set(keyword_movies.keys()))
         all_movie_data.update(keyword_movies)
-    
+
     # applying other filters if provided
     if genres:
         genre_movies = genre_filter(*genres)
         filter_results.append(set(genre_movies.keys()))
         all_movie_data.update(genre_movies)
-    
-    if year:
-        if len(year) == 1:
-            year_movies = year_filter(year[0])    
-        elif len(year) == 2:
-            year_movies = year_filter(year[0], year[1])
+
+    if year_int:
+        if len(year_int) == 1:
+            year_movies = year_filter(year_int[0])    
+        elif len(year_int) == 2:
+            year_movies = year_filter(year_int[0], year_int[1])
         else:
             raise ValueError("year should have 1 or 2 elements")
         filter_results.append(set(year_movies.keys()))
@@ -377,18 +368,76 @@ def all_filters_combined(query: str,keywords: List[str] = [],
         director_movies = director_filter(director)
         filter_results.append(set(director_movies.keys()))
         all_movie_data.update(director_movies)
-    
-    if rating :
+
+    if rating:
         rating_movies = rating_filter(rating)
         filter_results.append(set(rating_movies.keys()))
         all_movie_data.update(rating_movies)
-    
+
+    if not filter_results:
+        return {}  # No filters provided, return empty
+
     # finding intersection of all filter results
     common_movies = set.intersection(*filter_results) if filter_results else set()
-    
+
     # building final result dictionary with movie data
     final_movies = {movie_id: all_movie_data[movie_id] for movie_id in common_movies if movie_id in all_movie_data}
-    
+
     # sorting by rating and limit to top 150
     sorted_movies = dict(sorted(final_movies.items(), key=lambda x: x[1]['vote_average'], reverse=True)[:150])
+    return sorted_movies
+
+def filtered_search_flexible(query: Optional[str] = None, keywords: Optional[list] = None, genres: Optional[list] = None, year: Optional[list] = None, director: Optional[str] = None, rating: Optional[float] = None):
+    """
+    Flexible filtered search: only applies filters that are provided (not None or empty).
+    If all fields are filled, uses all_filters_combined for strict intersection.
+    Otherwise, applies only the provided filters and returns the union of results, sorted by rating.
+    """
+    keywords = keywords or []
+    genres = genres or []
+    year = year or []
+    director = director or ""
+    rating = rating if rating is not None else 0.0
+
+    # Convert year values to int if they are not already
+    year_int = []
+    for y in year:
+        try:
+            year_int.append(int(y))
+        except Exception:
+            continue
+
+    # Check if all fields are filled (not empty/None, rating can be 0.0)
+    all_filled = (
+        (query is not None and str(query).strip() != "") and
+        (keywords is not None and len(keywords) > 0) and
+        (genres is not None and len(genres) > 0) and
+        (year_int is not None and len(year_int) > 0) and
+        (director is not None and str(director).strip() != "") and
+        (rating is not None)
+    )
+    
+    if all_filled:
+        # Use strict intersection
+        return all_filters_combined(query, keywords, genres, year_int, director, rating)
+
+    # Otherwise, apply only the provided filters and union the results
+    results = {}
+    if query:
+        results.update(query_filter(query))
+    if keywords:
+        results.update(keyword_filter(*keywords))
+    if genres:
+        results.update(genre_filter(*genres))
+    if year_int:
+        if len(year_int) == 1:
+            results.update(year_filter(year_int[0]))
+        elif len(year_int) == 2:
+            results.update(year_filter(year_int[0], year_int[1]))
+    if director:
+        results.update(director_filter(director))
+    if rating is not None and rating > 0.0:
+        results.update(rating_filter(rating))
+    # Sort by rating, limit to 150
+    sorted_movies = dict(sorted(results.items(), key=lambda x: x[1]['vote_average'], reverse=True)[:150])
     return sorted_movies

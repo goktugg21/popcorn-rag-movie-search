@@ -5,7 +5,7 @@ import sys
 # Load environment variables from .env file
 
 import pytest
-from utils.tropes import trope_filter, add_trope, movies_with_trope
+from utils.tropes import trope_filter, add_trope, movies_with_trope, movie_display
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, select, insert, delete, or_
 from sqlalchemy.orm import Session, sessionmaker
@@ -86,3 +86,24 @@ def test_movies_with_trope(engine_movies_with_trope):
         movie_ids = [movie.id for movie in results]
         assert 100005 in movie_ids
         assert 100004 not in movie_ids
+
+@pytest.fixture
+def engine_movie_display():
+    load_dotenv()
+    engine = create_engine(os.getenv("PG_URL"))
+    with engine.connect() as connection:
+        connection.execute(insert(Movie).values(id=100006))
+        connection.commit()
+    yield engine
+    with engine.connect() as connection:
+        connection.execute(delete(Movie).where(Movie.id == 100006))
+        connection.commit()
+
+def test_movie_display(engine_movie_display):
+    """Test the movie display function."""
+    with engine_movie_display.connect() as connection:
+        results = movie_display(connection)
+        assert len(results) > 0
+        for movie in results:
+            assert isinstance(movie.id, int)
+            assert movie.id in select(Movie.id)

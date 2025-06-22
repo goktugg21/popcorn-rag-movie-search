@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Dashboard - Movie Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="logo.png" alt="Movie Explorer Logo" />
+        </div>
+        <nav class="user-nav">
+            <span class="welcome-text">Welcome, <span id="userName">User</span>!</span>
+            <button class="btn btn-profile" onclick="showProfile()">👤 Profile</button>
+            <button class="btn btn-logout" onclick="logout()">Logout</button>
+        </nav>
+    </header>
+    
+    <main class="dashboard">
+        <div class="dashboard-header">
+            <h1>Movie Recommendations</h1>
+            <p>Discover your next favorite movies with AI-powered recommendations and advanced filtering</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-tabs">
+                <button class="tab-btn active" onclick="switchTab('ai-search')">AI Search</button>
+                <button class="tab-btn" onclick="switchTab('filter-search')">Filtered Search</button>
+            </div>
+
+            <!-- AI Search Tab -->
+            <div id="ai-search" class="tab-content active">
+                <div class="search-card">
+                    <h3>🤖 AI-Powered Movie Search</h3>
+                    <p>Describe the type of movie you're looking for in natural language</p>
+                    <form class="ai-search-form" onsubmit="performAISearch(event)">
+                        <div class="form-group">
+                            <textarea 
+                                id="aiQuery" 
+                                placeholder="e.g., 'A sci-fi movie about time travel with a happy ending' or 'Romantic comedy set in Paris with great dialogue'"
+                                rows="4"
+                                required
+                            ></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Get AI Recommendations</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Filtered Search Tab -->
+            <div id="filter-search" class="tab-content">
+                <div class="search-card">
+                    <h3>🔍 Advanced Movie Filtering</h3>
+                    <p>Browse movies using detailed filters and preferences</p>
+                    <form class="filter-form" onsubmit="performFilterSearch(event)">
+                        <div class="filter-grid">
+                            <div class="form-group">
+                                <label for="query">Search Query</label>
+                                <input type="text" id="query" name="query" placeholder="Enter movie title, director, or keywords">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="genres">Genre</label>
+                                <select id="genres" name="genres">
+                                    <option value="">All Genres</option>
+                                    <option value="action">Action</option>
+                                    <option value="adventure">Adventure</option>
+                                    <option value="animation">Animation</option>
+                                    <option value="comedy">Comedy</option>
+                                    <option value="crime">Crime</option>
+                                    <option value="documentary">Documentary</option>
+                                    <option value="drama">Drama</option>
+                                    <option value="family">Family</option>
+                                    <option value="fantasy">Fantasy</option>
+                                    <option value="history">History</option>
+                                    <option value="horror">Horror</option>
+                                    <option value="music">Music</option>
+                                    <option value="mystery">Mystery</option>
+                                    <option value="romance">Romance</option>
+                                    <option value="sci-fi">Science Fiction</option>
+                                    <option value="thriller">Thriller</option>
+                                    <option value="war">War</option>
+                                    <option value="western">Western</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="year">Release Year</label>
+                                <select id="year" name="year">
+                                    <option value="">All Years</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2023">2023</option>
+                                    <option value="2022">2022</option>
+                                    <option value="2021">2021</option>
+                                    <option value="2020">2020</option>
+                                    <option value="2019">2019</option>
+                                    <option value="2018">2018</option>
+                                    <option value="2017">2017</option>
+                                    <option value="2016">2016</option>
+                                    <option value="2015">2015</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="rating">Minimum Rating</label>
+                                <select id="rating" name="rating">
+                                    <option value="">Any Rating</option>
+                                    <option value="9">9+ (Excellent)</option>
+                                    <option value="8">8+ (Very Good)</option>
+                                    <option value="7">7+ (Good)</option>
+                                    <option value="6">6+ (Above Average)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="director">Director</label>
+                                <input type="text" id="director" name="director" placeholder="Enter director name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="keyword">Keywords</label>
+                                <input type="text" id="keyword" name="keyword" placeholder="Enter keywords">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Get Filtered Recommendations</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <h2>Your Movie Recommendations</h2>
+                <p id="resultsCount">Showing <span id="resultNumber">0</span> movies</p>
+            </div>
+            
+            <div class="movies-grid" id="moviesGrid">
+                <!-- Movie cards will be populated here -->
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Finding the perfect movies for you...</p>
+        </div>
+    </main>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content profile-modal">
+            <span class="close" onclick="closeProfileModal()">&times;</span>
+            <div class="profile-content">
+                <div class="profile-header">
+                    <h2>👤 User Profile</h2>
+                </div>
+                
+                <div class="profile-tabs">
+                    <button class="profile-tab-btn active" onclick="switchProfileTab('info')">Profile Info</button>
+                    <button class="profile-tab-btn" onclick="switchProfileTab('favorites')">My Favorites</button>
+                    <button class="profile-tab-btn" onclick="switchProfileTab('settings')">Account Settings</button>
+                </div>
+
+                <!-- Profile Info Tab -->
+                <div id="profile-info" class="profile-tab-content active">
+                    <div class="profile-info-card">
+                        <h3>Account Information</h3>
+                        <div class="info-item">
+                            <label>Username:</label>
+                            <span id="profileUsername">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Member Since:</label>
+                            <span id="memberSince">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Total Favorites:</label>
+                            <span id="totalFavorites">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favorites Tab -->
+                <div id="profile-favorites" class="profile-tab-content">
+                    <div class="favorites-section">
+                        <h3>❤️ My Favorite Movies</h3>
+                        <div id="favoritesGrid" class="favorites-grid">
+                            <p class="loading-text">Loading your favorites...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Settings Tab -->
+                <div id="profile-settings" class="profile-tab-content">
+                    <div class="settings-section">
+                        <h3>⚙️ Account Settings</h3>
+                        
+                        <div class="danger-zone">
+                            <h4>⚠️ Danger Zone</h4>
+                            <p>These actions cannot be undone.</p>
+                            
+                            <div class="delete-account-section">
+                                <h5>Delete Account</h5>
+                                <p>Permanently delete your account and all associated data.</p>
+                                <button class="btn btn-danger" onclick="showDeleteAccountModal()">Delete My Account</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div id="deleteAccountModal" class="modal">
+        <div class="modal-content delete-modal">
+            <span class="close" onclick="closeDeleteModal()">&times;</span>
+            <div class="delete-content">
+                <h2>🗑️ Delete Account</h2>
+                <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+                <p><strong>This will permanently delete:</strong></p>
+                <ul>
+                    <li>Your account information</li>
+                    <li>All your favorite movies</li>
+                    <li>Your search history</li>
+                </ul>
+                
+                <form id="deleteAccountForm" onsubmit="deleteAccount(event)">
+                    <div class="form-group">
+                        <label for="deletePassword">Enter your password to confirm:</label>
+                        <input type="password" id="deletePassword" required>
+                    </div>
+                    <div class="delete-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movie Detail Modal -->
+    <div id="movieModal" class="modal">
+        <div class="modal-content movie-detail-modal">
+            <span class="close" onclick="closeMovieModal()">&times;</span>
+            <div id="movieDetailContent">
+                <!-- Movie details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html> 

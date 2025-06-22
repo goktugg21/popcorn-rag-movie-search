@@ -14,7 +14,7 @@ from models.Base import Base
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from models.Base import Base
-from utils.tropes import add_trope, trope_filter, movies_with_trope
+from utils.tropes import add_trope, trope_filter, movies_with_trope, movie_display
 from typing import Optional, Tuple
 import os
 from sqlalchemy import text
@@ -25,6 +25,7 @@ from sqlalchemy.engine import Engine
 from llama_index.core.base.response.schema import Response
 from flask_cors import CORS
 from flask import send_from_directory
+import requests
 
 app: Flask = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -111,14 +112,15 @@ def login():
         'exp': datetime.now(timezone.utc) + timedelta(hours=1)
     }, os.getenv('SECRET_KEY'), algorithm='HS256')
 
-    response = make_response('Login successful')
+    response = make_response(jsonify({'message': 'Login successful'}))
     response.set_cookie(
         'token',
         token,
         max_age=3600, 
         httponly=True,
         secure=False,
-        samesite='Lax'
+        samesite='Lax',
+        path='/'
     )
 
     return response, 200
@@ -148,10 +150,65 @@ def check_login() -> Tuple[Optional[int], Optional[str], int]:
     
 @app.route('/logout', methods=['GET'])
 def logout():
+    print("Logout endpoint called")
     response = make_response('Logged out successfully')
-    response.set_cookie('token', '', expires=0, httponly=True, secure=True, samesite='Lax')
+    response.set_cookie('token', '', expires=0, httponly=True, secure=False, samesite='Lax', path='/')
+    print("Logout response created")
     return response, 200
 
+@app.route('/user_info', methods=['GET'])
+def get_user_info():
+    """
+    Get current user information.
+    """
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    stmp = select(User).where(User.id == user_id)
+    connection = engine.connect()
+    res = connection.execute(stmp).first()
+    
+    if not res:
+        return 'User not found', 404
+    
+    return {
+        'id': res.id,
+        'username': res.username
+    }, 200
+
+@app.route('/favorites', methods=['GET'])
+def get_user_favorites():
+    """
+    Get current user's favorite movies.
+    """
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    # Get user's favorite movie IDs
+    fav_stmt = select(Favourite).where(Favourite.user_id == user_id)
+    connection = engine.connect()
+    fav_results = connection.execute(fav_stmt).all()
+    
+    favorite_movies = []
+    for fav in fav_results:
+        # Get movie details for each favorite
+        movie_stmt = select(Movie).where(Movie.id == fav.movie_id)
+        movie_result = connection.execute(movie_stmt).scalars().first()
+        
+        if movie_result:
+            movie = movie_result
+            favorite_movies.append({
+                'id': movie.id,
+                'title': movie.original_title,
+                'release_year': movie.release_year,
+                'vote_average': movie.vote_average,
+                'genres': movie.genres,
+                'overview': movie.text
+            })
+    
+    return jsonify(favorite_movies), 200
 
 @app.post('/chat')
 def aiSearch() -> FlaskResponse:
@@ -160,14 +217,40 @@ def aiSearch() -> FlaskResponse:
     Returns:
         Response: A dictionary containing the response of the AI and the movies found.
     """
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
     data = request.get_json()
     query: str = data.get("query")
     if query is None or query.strip() == "":
         return jsonify({"error": "Query cannot be empty"}), 400
-    chat_res: Response = chat(query, getQEngine())
-    chat_res_text = chat_res.response
-    movies_found = [movie.metadata.get("imdb_id") for movie in chat_res.source_nodes]
-    return jsonify({"response": chat_res_text, "movie_ids": movies_found}), 200
+    
+    try:
+        chat_res: Response = chat(query, getQEngine())
+        chat_res_text = chat_res.response
+        
+        # Extract movie IDs from source nodes
+        movie_ids = []
+        with engine.connect() as connection:
+            for node in chat_res.source_nodes:
+                node_id = node.node_id
+                if node_id:
+                    stmt = select(Movie).where(Movie.node_id == node_id)
+                    result = connection.execute(stmt).scalars().first()
+                    if result:
+                        movie_ids.append(result.id)
+                if len(movie_ids) >= 9:
+                    break
+        return jsonify({
+            "response": chat_res_text, 
+            "movie_ids": movie_ids[:9]
+        }), 200
+    except Exception as e:
+        print(f"AI Search error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"AI search failed: {str(e)}"}), 500
 
 
 @app.route('/movie', methods=['GET'])
@@ -186,34 +269,33 @@ def get_movie():
         return 'Movie ID or IMDb ID is required', 400    
     
     with engine.connect() as connection:
-        res = connection.execute(stmp)
-        row = res.first()
-        if row is None:
+        res = connection.execute(stmp).scalars().first()
+        if res is None:
             return 'Movie not found', 404
-        result = dict(row._mapping)
+        result = res
         print(result)
         return {
-            'id': result.get('id'),
-            'imdb_id': result['imdb_id'],
-            'original_title': result['original_title'],
-            'popularity': result['popularity'],
-            'overview': result.get('text'),
-            'release_date': result['release_date'],
-            'budget': result['budget'],
-            'character_tropes': result.get('character_tropes'),
-            'revenue': result.get('revenue'),
-            'cast': result.get('stars'),
-            'homepage': result.get('homepage'),
-            'director': result.get('director'),
-            'tagline': result.get('tagline'),
-            'keywords': result.get('keywords'),
-            'runtime': result.get('runtime'),
-            'genres': result.get('genres'),
-            'release_date': result.get('release_date'),
-            'vote_count': result.get('vote_count'),
-            'vote_average': result.get('vote_average'),
-            'release_year': result.get('release_year'),
-            'character_tropes': result.get('character_tropes')
+            'id': result.id,
+            'imdb_id': result.imdb_id,
+            'original_title': result.original_title,
+            'popularity': result.popularity,
+            'overview': result.text,
+            'release_date': result.release_date,
+            'budget': result.budget,
+            'character_tropes': result.character_tropes,
+            'revenue': result.revenue,
+            'cast': result.stars,
+            'homepage': result.homepage,
+            'director': result.director,
+            'tagline': result.tagline,
+            'keywords': result.keywords,
+            'runtime': result.runtime,
+            'genres': result.genres,
+            'release_date': result.release_date,
+            'vote_count': result.vote_count,
+            'vote_average': result.vote_average,
+            'release_year': result.release_year,
+            'character_tropes': result.character_tropes
         }, 200
 
 @app.route('/add_favourite', methods=['POST'])
@@ -340,15 +422,48 @@ def search_movies():
     Endpoint to search for movies with various filters.
     """
     data = request.get_json()
+    print(f"Search request data: {data}")
+    
     query: str = data.get('query')
     keyword: list = data.get('keyword')
     genres: list = data.get('genres')
     year: list = data.get('year')
-    director: list = data.get('director')
+    director: str = data.get('director')
     rating: float = data.get('rating')
 
-    return jsonify(all_filters_combined(query, keyword, genres, year, director, rating)), 200
+    try:
+        from utils.regular_filter_search import filtered_search_flexible
+        result = filtered_search_flexible(query, keyword, genres, year, director, rating)
+        print(f"Search result: {len(result)} movies found")
+        # Return a list of dicts with at most 9 movies
+        movies = list(result.values())[:9]
+        return jsonify([{**v, 'id': v['id']} for v in movies]), 200
+    except Exception as e:
+        print(f"Search error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
+@app.route('/movie_display', methods=['GET'])
+def movie_display_route():
+    """
+    Endpoint to display movie details by ID.
+    """
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+
+    movie_id = request.args.get("id")
+    if not movie_id:
+        return 'Movie ID is required', 400
+
+    with engine.connect() as connection:
+        result = movie_display(movie_id, connection)
+
+    if not result:
+        return 'Movie not found', 404
+
+    return jsonify(result), 200
 
 @app.route('/')
 def serve_index():
@@ -371,4 +486,4 @@ if __name__ == '__main__':
         create_index(load_movies_from_csv(os.getenv("MOVIE_CSV_FILE")))
     
     # Set up the Flask app
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
