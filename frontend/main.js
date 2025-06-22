@@ -597,6 +597,39 @@ async function showMovieModal(movieId, anchorElement) {
                         }
                         addFavouriteBtn.disabled = false;
                     };
+
+                    // --- Add Character Trope Button (if logged in) ---
+                    let addTropeBtn = document.getElementById('add-trope-btn');
+                    if (!addTropeBtn) {
+                        addTropeBtn = document.createElement('button');
+                        addTropeBtn.id = 'add-trope-btn';
+                        addTropeBtn.className = 'purple-btn'; // Use same class as Add to Favourites for size/style
+                        addTropeBtn.style.marginTop = '10px';
+                        addTropeBtn.style.width = '100%';
+                        addTropeBtn.textContent = 'Add Character Trope';
+                        addFavouriteBtn.parentNode.insertBefore(addTropeBtn, addFavouriteBtn.nextSibling);
+                    }
+                    addTropeBtn.style.display = (localStorage.getItem('username')) ? '' : 'none';
+                    addTropeBtn.onclick = function() {
+                        // Show a prompt to enter the trope
+                        const trope = prompt('Enter a character trope to add to this movie:');
+                        if (trope && trope.trim()) {
+                            fetch('/add_trope', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ movie_id: movie.id, trope: trope.trim() })
+                            })
+                            .then(res => {
+                                if (res.ok) {
+                                    alert('Trope added successfully!');
+                                } else {
+                                    alert('Failed to add trope.');
+                                }
+                            })
+                            .catch(() => alert('Failed to add trope.'));
+                        }
+                    };
                 })
                 .catch(() => {
                     addFavouriteBtn.textContent = 'Add to Favourites';
