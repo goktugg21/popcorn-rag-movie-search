@@ -23,11 +23,15 @@ from utils.rag_tools import create_index, load_movies_from_csv, chat, getQEngine
 from utils.regular_filter_search import all_filters_combined
 from sqlalchemy.engine import Engine
 from llama_index.core.base.response.schema import Response
+from flask_cors import CORS
+from flask import send_from_directory
 
 app: Flask = Flask(__name__)
+CORS(app, supports_credentials=True)
 load_dotenv()
 # Create the database engine and initialize the tables
 engine: Engine = create_engine(os.getenv("PG_URL"))
+
 
 
 @app.route('/register', methods=['POST'])
@@ -121,6 +125,7 @@ def login():
 
 def check_login() -> Tuple[Optional[int], Optional[str], int]:
     token = request.cookies.get('token')
+    print(f"Cookie token: {token}")  
 
     if not token:
         return None, 'Token missing', 401
@@ -128,7 +133,8 @@ def check_login() -> Tuple[Optional[int], Optional[str], int]:
     try:
         decoded = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=['HS256'])
         id = decoded['id']
-        
+        print(f"Cookie token: {token}") 
+
         stmp = select(User).where(User.id==id)
         connection = engine.connect()
         res = connection.execute(stmp).first()
@@ -142,7 +148,6 @@ def check_login() -> Tuple[Optional[int], Optional[str], int]:
     
 @app.route('/logout', methods=['GET'])
 def logout():
-
     response = make_response('Logged out successfully')
     response.set_cookie('token', '', expires=0, httponly=True, secure=True, samesite='Lax')
     return response, 200
@@ -195,8 +200,20 @@ def get_movie():
             'overview': result.get('text'),
             'release_date': result['release_date'],
             'budget': result['budget'],
+            'character_tropes': result.get('character_tropes'),
+            'revenue': result.get('revenue'),
+            'cast': result.get('stars'),
+            'homepage': result.get('homepage'),
+            'director': result.get('director'),
+            'tagline': result.get('tagline'),
+            'keywords': result.get('keywords'),
+            'runtime': result.get('runtime'),
+            'genres': result.get('genres'),
+            'release_date': result.get('release_date'),
+            'vote_count': result.get('vote_count'),
+            'vote_average': result.get('vote_average'),
+            'release_year': result.get('release_year'),
             'character_tropes': result.get('character_tropes')
-            
         }, 200
 
 @app.route('/add_favourite', methods=['POST'])
@@ -282,12 +299,13 @@ def trope_filter_route():
 
     return jsonify(response), 200
 
-@app.route('/movies_with_trope', methods=['GET'])
+@app.route('/movies_with_trope', methods=['POST'])
 def movies_with_trope_route():
     """
     Endpoint to get movies with a specific character trope.
     """
     user_id, error_msg, error_code = check_login()
+    print(user_id, error_msg, error_code)
     if error_msg:
         return error_msg, error_code
     
@@ -303,7 +321,7 @@ def movies_with_trope_route():
         results = movies_with_trope(user_trope, connection)
 
     movies = [movie for movie in results]
-    
+    print(movies)
     response = []
     for movie in movies:
         movie_data = {
@@ -316,7 +334,7 @@ def movies_with_trope_route():
         return jsonify({"message": "No movies found with the specified trope"}), 404
     return jsonify(response), 200
 
-@app.get('/search')
+@app.route('/search', methods=['POST'])
 def search_movies():
     """
     Endpoint to search for movies with various filters.
@@ -330,6 +348,15 @@ def search_movies():
     rating: float = data.get('rating')
 
     return jsonify(all_filters_combined(query, keyword, genres, year, director, rating)), 200
+
+
+@app.route('/')
+def serve_index():
+    return send_from_directory('../frontend', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('../frontend', path)
     
 if __name__ == '__main__':
     # Create vector extension if it doesn't exist
