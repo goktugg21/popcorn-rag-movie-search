@@ -315,7 +315,7 @@ def movies_with_trope_route():
         return jsonify({"message": "No movies found with the specified trope"}), 404
     return jsonify(response), 200
 
-@app.get('/search')
+@app.route('/search', methods=['POST'])
 def search_movies():
     """
     Endpoint to search for movies with various filters.

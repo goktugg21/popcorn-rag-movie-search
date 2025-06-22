@@ -43,15 +43,15 @@ cd ./backend
 ```sh
 pip install -r ./requirements.txt
 ``` 
-9. Run tests
-```sh
-pytest
-```
+
 9. Start the application
 ```sh
 python app.py
 ```
-
+10. Run tests
+```sh
+pytest
+```
 # Team
 Antonia Bulai - 2837920 \
 David-Valentin Neacsu - 2840781 \
@@ -108,7 +108,7 @@ Goktug Yildirim - 2814081
 
 - You must provide either id or imdb_id.
 
-#### GET /search
+#### POST /search
 - Description: Searches for movies using a combination of filters.
 
 - Body:
