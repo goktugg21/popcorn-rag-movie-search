@@ -37,6 +37,7 @@ load_dotenv()
 engine: Engine = create_engine(os.getenv("PG_URL"))
 
 
+
 @app.route('/register', methods=['POST'])
 def register():
     """
@@ -128,6 +129,7 @@ def login():
 
 def check_login() -> Tuple[Optional[int], Optional[str], int]:
     token = request.cookies.get('token')
+    print(f"Cookie token: {token}")  
 
     if not token:
         return None, 'Token missing', 401
@@ -135,7 +137,8 @@ def check_login() -> Tuple[Optional[int], Optional[str], int]:
     try:
         decoded = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=['HS256'])
         id = decoded['id']
-        
+        print(f"Cookie token: {token}") 
+
         stmp = select(User).where(User.id==id)
         connection = engine.connect()
         res = connection.execute(stmp).first()
@@ -207,8 +210,20 @@ def get_movie():
             'overview': result.get('text'),
             'release_date': result['release_date'],
             'budget': result['budget'],
+            'character_tropes': result.get('character_tropes'),
+            'revenue': result.get('revenue'),
+            'cast': result.get('stars'),
+            'homepage': result.get('homepage'),
+            'director': result.get('director'),
+            'tagline': result.get('tagline'),
+            'keywords': result.get('keywords'),
+            'runtime': result.get('runtime'),
+            'genres': result.get('genres'),
+            'release_date': result.get('release_date'),
+            'vote_count': result.get('vote_count'),
+            'vote_average': result.get('vote_average'),
+            'release_year': result.get('release_year'),
             'character_tropes': result.get('character_tropes')
-            
         }, 200
 
 @app.route('/add_favourite', methods=['POST'])
@@ -306,12 +321,13 @@ def trope_filter_route():
 
     return jsonify(response), 200
 
-@app.route('/movies_with_trope', methods=['GET'])
+@app.route('/movies_with_trope', methods=['POST'])
 def movies_with_trope_route():
     """
     Endpoint to get movies with a specific character trope.
     """
     user_id, error_msg, error_code = check_login()
+    print(user_id, error_msg, error_code)
     if error_msg:
         return error_msg, error_code
 
@@ -326,7 +342,7 @@ def movies_with_trope_route():
         results = movies_with_trope(user_trope, connection)
 
     movies = [movie for movie in results]
-    
+    print(movies)
     response = []
     for movie in movies:
         movie_data = {
