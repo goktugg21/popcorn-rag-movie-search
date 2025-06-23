@@ -17,7 +17,7 @@ function AppContent() {
   const location = useLocation();
 
   // Show navbar only on specific pages
-  const showNavbar = !['/login', '/register', '/terms', '/privacy'].includes(location.pathname);
+  const showNavbar = false;
 
   return (
     <div className="App" style={{ minHeight: '100vh', width: '100%' }}>
@@ -43,7 +43,7 @@ function AppContent() {
         <Navbar bg="dark" variant="dark" expand="lg" className="w-100">
           <Container fluid>
             <Navbar.Brand as={Link} to="/" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-              🎬 Movie App
+               🍿PopcornNotIncluded
             </Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">

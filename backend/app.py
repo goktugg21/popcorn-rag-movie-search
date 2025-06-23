@@ -33,7 +33,6 @@ load_dotenv()
 engine: Engine = create_engine(os.getenv("PG_URL"))
 
 
-
 @app.route('/register', methods=['POST'])
 def register():
     """
@@ -273,6 +272,48 @@ def add_trope_route():
         add_trope(user_trope, selected_movie_id, connection)
 
     return 'Trope added successfully', 200
+@app.route('/get_favourites', methods=['GET'])
+def get_favourites():
+    """
+    Get all favorite movies for the logged-in user.
+    """
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
+    
+    with engine.connect() as connection:
+        # Join Favourite with Movie table to get movie details in one query
+        stmt = select(Movie).join(Favourite, Movie.id == Favourite.movie_id).where(
+            Favourite.user_id == user_id
+        )
+        result = connection.execute(stmt)
+        movies = result.fetchall()
+        
+        if not movies:
+            return jsonify([]), 200
+        
+        response = []
+        for movie in movies:
+            movie_data = {
+                'id': movie.id,
+                'imdb_id': movie.imdb_id,
+                'original_title': movie.original_title,
+                'popularity': movie.popularity,
+                'overview': movie.text,
+                'release_date': str(movie.release_date) if movie.release_date else None,
+                'release_year': movie.release_year,
+                'vote_average': movie.vote_average,
+                'vote_count': movie.vote_count,
+                'runtime': movie.runtime,
+                'genres': movie.genres,
+                'director': movie.director,
+                'character_tropes': movie.character_tropes,
+                'poster_path': movie.metadata_.get('poster_path') if movie.metadata_ else None
+            }
+            response.append(movie_data)
+    
+    return jsonify(response), 200
+
 
 @app.route('/trope_filter', methods=['GET'])
 def trope_filter_route():

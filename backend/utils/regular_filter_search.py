@@ -342,14 +342,20 @@ def all_filters_combined(query: str,keywords: List[str] = [],
     
     # getting results from each filter
     filter_results = []
-    all_movie_data = {}  # collecting all movie data from all filters
+    all_movie_data = {}
     
-    if not query:
-        raise ValueError("query parameter cannot be empty")
+    # validating input parameters
+    if not any([query and len(query.strip()) >= 3, keywords, genres, year, director and len(director.strip()) >= 3, rating and rating > 0]):
+        raise ValueError("At least one filter parameter required")
     
-    query_results = query_filter(query)
-    filter_results.append(set(query_results.keys()))
-    all_movie_data.update(query_results)
+    # 
+    if query and len(query.strip()) >= 3:
+        query_results = query_filter(query)
+        filter_results.append(set(query_results.keys()))
+        all_movie_data.update(query_results)
+    
+
+
     
      # applying keyword filter if provided
     if keywords:
