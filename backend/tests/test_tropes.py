@@ -86,3 +86,38 @@ def test_movies_with_trope(engine_movies_with_trope):
         movie_ids = [movie.id for movie in results]
         assert 100005 in movie_ids
         assert 100004 not in movie_ids
+    
+@pytest.fixture
+def engine_movie_display():
+    """Fixture to set up and tear down the database for movie_display tests."""
+    load_dotenv()
+    engine = create_engine(os.getenv("PG_URL"))
+    with engine.connect() as connection:
+        connection.execute(insert(Movie).values(id=100006, original_title="Test Movie", director="Test Director", vote_average=8.5, tagline="Test Tagline", genres="Action", character_tropes="Hero"))
+        connection.commit()
+    yield engine
+    with engine.connect() as connection:
+        connection.execute(delete(Movie).where(Movie.id == 100006))
+        connection.commit()
+
+def test_movie_display(engine_movie_display):
+    """Test the movie_display function."""
+    with engine_movie_display.connect() as connection:
+        result = connection.execute(select(Movie).where(Movie.id == 100006)).one_or_none()
+        if result:
+            movie_details = {
+                "title": result.original_title,
+                "director": result.director,
+                "rating": result.vote_average,
+                "tagline": result.tagline,
+                "genres": result.genres,
+                "character_tropes": result.character_tropes
+            }
+            assert movie_details["title"] == "Test Movie"
+            assert movie_details["director"] == "Test Director"
+            assert movie_details["rating"] == 8.5
+            assert movie_details["tagline"] == "Test Tagline"
+            assert movie_details["genres"] == "Action"
+            assert movie_details["character_tropes"] == "Hero"
+        else:
+            pytest.fail("Movie not found")

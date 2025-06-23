@@ -36,3 +36,20 @@ def movies_with_trope(user_trope: str, session: Session) -> list:
     stmt = select(Movie).where(Movie.character_tropes == user_trope).order_by(Movie.original_title)
     results = session.execute(stmt).all()
     return results
+
+def movie_display(movie_id: int, session: Session):
+    """
+    Display movie details by ID.
+    """
+    stmt = select(Movie).where(Movie.id == movie_id)
+    result = session.execute(stmt).one_or_none()
+    if result:
+        return {
+            "title": result.Movie.original_title,
+            "director": result.Movie.director,
+            "rating": result.Movie.vote_average,
+            "tagline": result.Movie.tagline,
+            "genres": result.Movie.genres,
+            "character_tropes": result.Movie.character_tropes
+        }
+    return {}
