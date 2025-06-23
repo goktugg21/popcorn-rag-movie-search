@@ -23,11 +23,13 @@ from utils.rag_tools import create_index, load_movies_from_csv, chat, getQEngine
 from utils.regular_filter_search import all_filters_combined
 from sqlalchemy.engine import Engine
 from llama_index.core.base.response.schema import Response
+from flask_cors import CORS
 
 app: Flask = Flask(__name__)
 load_dotenv()
 # Create the database engine and initialize the tables
 engine: Engine = create_engine(os.getenv("PG_URL"))
+CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
 
 @app.route('/register', methods=['POST'])
@@ -194,8 +196,20 @@ def get_movie():
             'overview': result.get('text'),
             'release_date': result['release_date'],
             'budget': result['budget'],
+            'character_tropes': result.get('character_tropes'),
+            'revenue': result.get('revenue'),
+            'cast': result.get('stars'),
+            'homepage': result.get('homepage'),
+            'director': result.get('director'),
+            'tagline': result.get('tagline'),
+            'keywords': result.get('keywords'),
+            'runtime': result.get('runtime'),
+            'genres': result.get('genres'),
+            'release_date': result.get('release_date'),
+            'vote_count': result.get('vote_count'),
+            'vote_average': result.get('vote_average'),
+            'release_year': result.get('release_year'),
             'character_tropes': result.get('character_tropes')
-            
         }, 200
 
 @app.route('/add_favourite', methods=['POST'])
@@ -281,7 +295,7 @@ def trope_filter_route():
 
     return jsonify(response), 200
 
-@app.route('/movies_with_trope', methods=['GET'])
+@app.route('/movies_with_trope', methods=['POST'])
 def movies_with_trope_route():
     """
     Endpoint to get movies with a specific character trope.
@@ -329,7 +343,41 @@ def search_movies():
     rating: float = data.get('rating')
 
     return jsonify(all_filters_combined(query, keyword, genres, year, director, rating)), 200
+
+@app.route('/get_favourites', methods=['GET'])
+def get_favourites():
+
+    user_id, error_msg, error_code = check_login()
+    if error_msg:
+        return error_msg, error_code
     
+    with engine.connect() as connection:
+        stmt = select(Favourite).where(Favourite.user_id == user_id)
+        res = connection.execute(stmt)
+        favourites = res.fetchall()
+
+        if not favourites:
+            return jsonify([]), 200
+
+        response = []
+        for favourite in favourites:
+            movie_stmt = select(Movie).where(Movie.id == favourite.movie_id)
+            movie_res = connection.execute(movie_stmt).first()
+            if movie_res:
+                movie_data = {
+                    'id': movie_res.id,
+                    'imdb_id': movie_res.imdb_id,
+                    'original_title': movie_res.original_title,
+                    'popularity': movie_res.popularity,
+                    'overview': movie_res.text,
+                    'release_date': movie_res.release_date,
+                    'budget': movie_res.budget,
+                    'character_tropes': movie_res.character_tropes
+                }
+                response.append(movie_data)
+
+    return jsonify(response), 200
+
 if __name__ == '__main__':
     # Create vector extension if it doesn't exist
     with engine.connect() as connection:
