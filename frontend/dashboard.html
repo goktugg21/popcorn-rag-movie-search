@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Movie Recommender</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header dashboard-header">
+        <img src="logo.png" alt="Popcorn Logo" class="logo">
+        <div class="user-bar">
+            <span id="welcome-message">Welcome, <span id="dashboard-username">User</span></span>
+            <button id="profile-btn" class="btn btn-profile">Profile</button>
+        </div>
+    </header>
+    <main class="main-content dashboard-main">
+        <section class="dashboard-cards">
+            <div class="card dashboard-card">
+                <h2>AI Search</h2>
+                <p>Find movies using natural language descriptions</p>
+                <button class="btn btn-ai" id="open-ai-search-modal">Start AI Search</button>
+            </div>
+            <div class="card dashboard-card">
+                <h2>Filtered Search</h2>
+                <p>Browse movies by genre, year, rating, and more</p>
+                <button class="btn btn-filter" id="filtered-search-btn">Browse Movies</button>
+            </div>
+        </section>
+    </main>
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="modal" style="display:none;">
+      <div class="modal-content profile-modal-content">
+        <span class="close" id="close-profile-modal">&times;</span>
+        <h2>User Profile</h2>
+        <div class="profile-info">
+            <p><strong>Username:</strong> <span id="profile-username">User</span></p>
+        </div>
+        <h3>Your Favorite Movies</h3>
+        <ul id="favorites-list" class="favorites-list">
+            <li>Loading...</li>
+        </ul>
+        <button class="btn btn-login" id="logout-btn">Logout</button>
+      </div>
+    </div>
+    <!-- Filtered Search Modal -->
+    <div id="filtered-search-modal" class="modal" style="display:none;">
+      <div class="modal-content filtered-search-modal-content">
+        <span class="close" id="close-filtered-search-modal">&times;</span>
+        <h2>Filtered Search</h2>
+        <p style="color:#b0b3b8; margin-bottom:10px;">Choose one filter type below. <strong>Only one filter can be used at a time.</strong></p>
+        <p style="color:#888; font-size:0.95em; margin-bottom:10px;">Tip: After searching, you can add a <strong>main character trope</strong> to any movie using the Add Trope button next to Add to Favorites.</p>
+        <form id="filtered-search-form">
+          <input type="text" id="filter-keywords" placeholder="Keywords (comma separated)">
+          <input type="text" id="filter-genres" placeholder="Genres (comma separated)">
+          <input type="text" id="filter-year" placeholder="Year or Year Range (e.g. 2010 or 2000-2010)">
+          <input type="text" id="filter-director" placeholder="Director">
+          <select id="filter-trope">
+            <option value="">Character Trope (choose one)</option>
+          </select>
+          <input type="number" id="filter-rating" placeholder="Min Rating (0-10)" min="0" max="10" step="0.1">
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button type="submit" class="btn btn-filter" style="flex-grow:1;">Search</button>
+            <button type="button" class="btn btn-clear" id="clear-filters-btn">Clear Filters</button>
+          </div>
+        </form>
+        <div id="filtered-search-results" class="filtered-search-results"></div>
+      </div>
+    </div>
+    <!-- AI Search Modal -->
+    <div id="ai-search-modal" class="modal" style="display:none;">
+      <div class="modal-content filtered-search-modal-content">
+        <span class="close" id="close-ai-search-modal">&times;</span>
+        <h2>AI Search</h2>
+        <form id="ai-search-form">
+          <textarea id="ai-search-query" placeholder="Describe the kind of movie you want to watch..." rows="3" style="width:100%;margin-bottom:10px;"></textarea>
+          <button type="submit" class="btn btn-ai">Ask AI</button>
+        </form>
+        <div id="ai-search-response" style="margin:12px 0;color:#b0b3b8;"></div>
+        <div id="ai-search-results" class="filtered-search-results"></div>
+      </div>
+    </div>
+    <!-- Movie Details Modal -->
+    <div id="movie-details-modal" class="modal" style="display:none;">
+      <div class="modal-content movie-details-modal-content">
+        <span class="close" id="close-movie-details-modal">&times;</span>
+        <div id="movie-details-content">
+          <h2 id="movie-details-title">Movie Details</h2>
+          <div id="movie-details-info"></div>
+        </div>
+      </div>
+    </div>
+    <script src="dashboard.js"></script>
+</body>
+</html> 

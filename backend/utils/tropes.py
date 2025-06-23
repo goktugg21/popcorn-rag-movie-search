@@ -42,14 +42,45 @@ def movie_display(movie_id: int, session: Session):
     Display movie details by ID.
     """
     stmt = select(Movie).where(Movie.id == movie_id)
-    result = session.execute(stmt).one_or_none()
-    if result:
+    movie = session.execute(stmt).one_or_none()
+    if movie:
         return {
-            "title": result.Movie.original_title,
-            "director": result.Movie.director,
-            "rating": result.Movie.vote_average,
-            "tagline": result.Movie.tagline,
-            "genres": result.Movie.genres,
-            "character_tropes": result.Movie.character_tropes
+            "id": movie.id,
+            "title": movie.original_title,
+            "director": movie.director,
+            "rating": movie.vote_average,
+            "tagline": movie.tagline,
+            "genres": movie.genres,
+            "character_tropes": movie.character_tropes
+        }
+    return {}
+
+def movie_display_extra(movie_id: int, session: Session):
+    """
+    Display all movie details by ID.
+    """
+    stmt = select(Movie).where(Movie.id == movie_id)
+    movie = session.execute(stmt).one_or_none()
+    if movie:
+        return {
+            "id": movie.id,
+            "text": movie.text,
+            "imdb_id": movie.imdb_id,
+            "popularity": movie.popularity,
+            "budget": movie.budget,
+            "revenue": movie.revenue,
+            "original_title": movie.original_title,
+            "stars": movie.stars,
+            "homepage": movie.homepage,
+            "director": movie.director,
+            "tagline": movie.tagline,
+            "keywords": movie.keywords,
+            "runtime": movie.runtime,
+            "genres": movie.genres,
+            "release_date": str(movie.release_date) if movie.release_date else None,
+            "vote_count": movie.vote_count,
+            "vote_average": movie.vote_average,
+            "release_year": movie.release_year,
+            "character_tropes": movie.character_tropes
         }
     return {}

@@ -14,17 +14,24 @@ from models.Base import Base
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from models.Base import Base
-from utils.tropes import add_trope, trope_filter, movies_with_trope, movie_display
+from utils.tropes import add_trope, trope_filter, movies_with_trope, movie_display, movie_display_extra
 from typing import Optional, Tuple
 import os
 from sqlalchemy import text
 from models.movieModel import Movie
 from utils.rag_tools import create_index, load_movies_from_csv, chat, getQEngine
 from utils.regular_filter_search import all_filters_combined
+from utils.regular_filter_search import keyword_filter, genre_filter, year_filter, director_filter, rating_filter
 from sqlalchemy.engine import Engine
 from llama_index.core.base.response.schema import Response
+from flask_cors import CORS
+
+
 
 app: Flask = Flask(__name__)
+
+CORS(app, supports_credentials=True, origins=["http://localhost:8000", "http://localhost:5001"])
+
 load_dotenv()
 # Create the database engine and initialize the tables
 engine: Engine = create_engine(os.getenv("PG_URL"))
@@ -154,13 +161,19 @@ def aiSearch() -> FlaskResponse:
     Returns:
         Response: A dictionary containing the response of the AI and the movies found.
     """
+    print('Received /chat request')
     data = request.get_json()
     query: str = data.get("query")
+    print('Query:', query)
     if query is None or query.strip() == "":
+        print('Query is empty')
         return jsonify({"error": "Query cannot be empty"}), 400
+    print('Calling chat()...')
     chat_res: Response = chat(query, getQEngine())
+    print('Chat response:', chat_res)
     chat_res_text = chat_res.response
     movies_found = [movie.metadata.get("imdb_id") for movie in chat_res.source_nodes]
+    print('Movies found:', movies_found)
     return jsonify({"response": chat_res_text, "movie_ids": movies_found}), 200
 
 
@@ -200,20 +213,32 @@ def get_movie():
 
 @app.route('/add_favourite', methods=['POST'])
 def add_favourite():
-    user_id, error_msg, error_code = check_login()
-    if error_msg:
-        return error_msg, error_code
-    
-    data = request.get_json()
-    movie_id = data.get('movie_id')
+    try:
+        user_id, error_msg, error_code = check_login()
+        if error_msg:
+            return error_msg, error_code
+        
+        data = request.get_json()
+        movie_id = data.get('movie_id')
+        
+        if not movie_id:
+            return 'Movie ID is required', 400
+            
+        try:
+            movie_id = int(movie_id)
+        except (TypeError, ValueError):
+            return 'Invalid movie ID', 400
 
-    conn = engine.connect()
-    stmt = insert(Favourite).values(user_id=user_id, movie_id=movie_id)
-    res = conn.execute(stmt).first()
-    conn.commit()
+        conn = engine.connect()
+        stmt = insert(Favourite).values(user_id=user_id, movie_id=movie_id)
+        res = conn.execute(stmt)
+        conn.commit()
+        conn.close()
 
-
-    return 'Favourite added successfully', 200
+        return 'Favourite added successfully', 200
+    except Exception as e:
+        print(f"Error in add_favourite: {str(e)}")
+        return f'Server error: {str(e)}', 500
 
 @app.route('/delete_favourite', methods=['POST'])
 def delete_favourite():
@@ -289,10 +314,9 @@ def movies_with_trope_route():
     user_id, error_msg, error_code = check_login()
     if error_msg:
         return error_msg, error_code
-    
-    data = request.get_json()
-    user_trope: str = data.get('user_trope')    
 
+    # For GET, get user_trope from query string
+    user_trope = request.args.get('user_trope')
     if not user_trope:
         return 'Character trope cannot be empty', 400
     else:
@@ -330,37 +354,58 @@ def search_movies():
 
     return jsonify(all_filters_combined(query, keyword, genres, year, director, rating)), 200
 
+@app.route('/search_per_filter', methods=['POST'])
+def search_movies_per_filter():
+    data = request.get_json()
+    if data.get('keyword'):
+        return jsonify(keyword_filter(*data['keyword'])), 200
+    elif data.get('genres'):
+        return jsonify(genre_filter(*data['genres'])), 200
+    elif data.get('year'):
+        y = data['year']
+        if len(y) == 1:
+            return jsonify(year_filter(y[0])), 200
+        elif len(y) == 2:
+            return jsonify(year_filter(y[0], y[1])), 200
+        else:
+            return jsonify({'error': 'Invalid year format'}), 400
+    elif data.get('director'):
+        return jsonify(director_filter(data['director'])), 200
+    elif data.get('rating') is not None:
+        return jsonify(rating_filter(float(data['rating']))), 200
+    else:
+        return jsonify({'error': 'No valid filter provided'}), 400
+    
 @app.route('/get_favourites', methods=['GET'])
 def get_favourites():
-
     user_id, error_msg, error_code = check_login()
     if error_msg:
         return error_msg, error_code
-    
+
+    response = []
     with engine.connect() as connection:
         stmt = select(Favourite).where(Favourite.user_id == user_id)
         res = connection.execute(stmt)
         favourites = res.fetchall()
 
-    if not favourites:
-        return jsonify([]), 200
+        if not favourites:
+            return jsonify([]), 200
 
-    response = []
-    for favourite in favourites:
-        movie_stmt = select(Movie).where(Movie.id == favourite.movie_id)
-        movie_res = connection.execute(movie_stmt).first()
-        if movie_res:
-            movie_data = {
-                'id': movie_res.id,
-                'imdb_id': movie_res.imdb_id,
-                'original_title': movie_res.original_title,
-                'popularity': movie_res.popularity,
-                'overview': movie_res.text,
-                'release_date': movie_res.release_date,
-                'budget': movie_res.budget,
-                'character_tropes': movie_res.character_tropes
-            }
-            response.append(movie_data)
+        for favourite in favourites:
+            movie_stmt = select(Movie).where(Movie.id == favourite.movie_id)
+            movie_res = connection.execute(movie_stmt).first()
+            if movie_res:
+                movie_data = {
+                    'id': movie_res.id,
+                    'imdb_id': movie_res.imdb_id,
+                    'original_title': movie_res.original_title,
+                    'popularity': movie_res.popularity,
+                    'overview': movie_res.text,
+                    'release_date': movie_res.release_date,
+                    'budget': movie_res.budget,
+                    'character_tropes': movie_res.character_tropes
+                }
+                response.append(movie_data)
 
     return jsonify(response), 200
 
@@ -369,16 +414,39 @@ def movie_display_route():
     """
     Endpoint to display movie details by ID.
     """
-    user_id, error_msg, error_code = check_login()
-    if error_msg:
-        return error_msg, error_code
-
     movie_id = request.args.get("id")
     if not movie_id:
         return 'Movie ID is required', 400
 
+    try:
+        movie_id = int(movie_id)
+    except ValueError:
+        return 'Invalid Movie ID', 400
+
     with engine.connect() as connection:
         result = movie_display(movie_id, connection)
+
+    if not result:
+        return 'Movie not found', 404
+
+    return jsonify(result), 200
+
+@app.route('/movie_display_extra', methods=['GET'])
+def movie_display_extra_route():
+    """
+    Endpoint to display all movie details by ID.
+    """
+    movie_id = request.args.get("id")
+    if not movie_id:
+        return 'Movie ID is required', 400
+
+    try:
+        movie_id = int(movie_id)
+    except ValueError:
+        return 'Invalid Movie ID', 400
+
+    with engine.connect() as connection:
+        result = movie_display_extra(movie_id, connection)
 
     if not result:
         return 'Movie not found', 404
@@ -398,4 +466,5 @@ if __name__ == '__main__':
         create_index(load_movies_from_csv(os.getenv("MOVIE_CSV_FILE")))
     
     # Set up the Flask app
-    app.run(debug=True)
+   
+    app.run(debug=True, port=5001)
