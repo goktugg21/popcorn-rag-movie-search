@@ -4,8 +4,11 @@ import SearchBar from './SearchBar';
 
 /**
  * Advanced search bar component that redirects to search page
+ * @param {Object} props - Component props
+ * @param {boolean} props.initialAiMode - Initial AI mode state (optional)
+ * @param {Function} props.onAiModeChange - Callback when AI mode changes (optional)
  */
-const PinnedSearchBar = () => {
+const PinnedSearchBar = ({ initialAiMode, onAiModeChange }) => {
   const navigate = useNavigate();
 
   /**
@@ -46,7 +49,12 @@ const PinnedSearchBar = () => {
     <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 shadow-md py-4">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center">
-          <SearchBar onSearch={handleSearch} onAiSearch={handleAiSearch} />
+          <SearchBar 
+            onSearch={handleSearch} 
+            onAiSearch={handleAiSearch}
+            initialAiMode={initialAiMode}
+            onAiModeChange={onAiModeChange}
+          />
         </div>
       </div>
     </div>

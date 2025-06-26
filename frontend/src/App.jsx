@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { AnimatePresence } from 'framer-motion';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
+import { SearchBarProvider } from './contexts/SearchBarContext';
 import {
   HomeSkeleton,
   DetailSkeleton,
@@ -55,11 +56,12 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 function App() {
   return (
     <Router>
-      <TitleManager />
-      <Layout>
-        <ErrorBoundary>
-          <AnimatePresence mode="wait">
-            <Routes>
+      <SearchBarProvider>
+        <TitleManager />
+        <Layout>
+          <ErrorBoundary>
+            <AnimatePresence mode="wait">
+              <Routes>
               <Route path="/" element={
                 <Suspense fallback={<HomeSkeleton />}>
                   <Home />
@@ -105,6 +107,7 @@ function App() {
           </AnimatePresence>
         </ErrorBoundary>
       </Layout>
+      </SearchBarProvider>
     </Router>
   );
 }

@@ -75,7 +75,7 @@ const SearchResults = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch search results when query changes
+  // Fetch search results when query or filters change
   useEffect(() => {
     const fetchSearchResults = async () => {
       try {
@@ -83,9 +83,12 @@ const SearchResults = () => {
         setCurrentPage(1); // Reset to first page on new search
         setAiResponse(''); // Clear AI response
         
-        if (query) {
+        // Check if we have any search criteria (query or filters)
+        const hasSearchCriteria = query || genreFilter || yearFilter || ratingFilter || directorFilter;
+        
+        if (hasSearchCriteria) {
           if (isAiMode) {
-            // Handle AI search
+            // Handle AI search (requires a query)
             const { response, movie_ids } = await api.movies.aiSearch(query);
             setAiResponse(response || '');
             
@@ -108,9 +111,9 @@ const SearchResults = () => {
             setMovies(movieResults);
             setFilteredMovies(movieResults);
           } else {
-            // Handle regular search with filters
+            // Handle regular search with filters (works with or without query)
             const searchFilters = {
-              query,
+              query: query || undefined,
               genres: genreFilter ? [genreFilter] : undefined,
               year: yearFilter ? parseYearFilter(yearFilter) : undefined,
               director: directorFilter ? [directorFilter] : undefined,
@@ -231,11 +234,18 @@ const SearchResults = () => {
     >
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
-          {query ? `Search Results for: "${query}"` : 'Search Results'}
+          {query ? `Search Results for: "${query}"` : 
+           genreFilter ? `${genreFilter} Movies` : 
+           'Search Results'}
         </h1>
-        {query && (
+        {(query || genreFilter || yearFilter || ratingFilter || directorFilter) && (
           <p className="text-gray-600 dark:text-gray-300">
-            Found {filteredMovies.length} results for your search
+            Found {filteredMovies.length} results
+            {query && ` for "${query}"`}
+            {genreFilter && !query && ` in ${genreFilter}`}
+            {yearFilter && ` from ${yearFilter}`}
+            {ratingFilter && ` with rating ${ratingFilter}+`}
+            {directorFilter && ` directed by ${directorFilter}`}
           </p>
         )}
       </div>
@@ -302,7 +312,9 @@ const SearchResults = () => {
             <div className="flex flex-col items-center justify-center min-h-[50vh]">
               <Spinner size="xl" color="primary" />
               <p className="mt-4 text-gray-600 dark:text-gray-400 animate-pulse">
-                Searching for "{query}"...
+                {query ? `Searching for "${query}"...` : 
+                 genreFilter ? `Finding ${genreFilter} movies...` : 
+                 'Searching...'}
               </p>
             </div>
           ) : error ? (
@@ -310,7 +322,7 @@ const SearchResults = () => {
               <h3 className="text-xl font-medium text-red-600 dark:text-red-400 mb-2">Search Error</h3>
               <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
             </div>
-          ) : !query ? (
+          ) : !query && !genreFilter && !yearFilter && !ratingFilter && !directorFilter ? (
             <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
               <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-2">Enter a search query</h3>
               <p className="text-gray-600 dark:text-gray-400">Use the search bar above to find movies</p>
@@ -319,7 +331,10 @@ const SearchResults = () => {
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-8 text-center">
               <h3 className="text-xl font-medium text-yellow-800 dark:text-yellow-200 mb-2">No results found</h3>
               <p className="text-yellow-600 dark:text-yellow-400">
-                We couldn't find any movies matching "{query}". Try adjusting your filters or search terms.
+                We couldn't find any movies matching your search criteria
+                {query && ` for "${query}"`}
+                {genreFilter && !query && ` in the ${genreFilter} genre`}
+                . Try adjusting your filters or search terms.
               </p>
             </div>
           ) : viewMode === 'grid' ? (

@@ -4,11 +4,13 @@ import Button from '../components/Button';
 import MovieCard from '../components/MovieCard';
 import api from '../utils/api';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import { useSearchBar } from '../contexts/SearchBarContext';
 
 const Home = () => {
   // Set document title using our custom hook
   useDocumentTitle('Home', true);
   const navigate = useNavigate();
+  const { setAiMode } = useSearchBar();
   
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [categories, setCategories] = useState([
@@ -191,6 +193,7 @@ const Home = () => {
               <div 
                 key={category.id} 
                 className="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer overflow-hidden group"
+                onClick={() => navigate(`/search?genre=${encodeURIComponent(category.name)}`)}
               >
                 <div className={`bg-gradient-to-br ${category.color} p-6 text-center h-full flex flex-col items-center justify-center`}>
                   <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.icon}</div>
@@ -287,7 +290,14 @@ const Home = () => {
               <div className="flex flex-wrap gap-4">
                 <Button 
                   variant="primary" 
-                  className="bg-white text-purple-800 hover:bg-gray-100 shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 transition-all">
+                  className="bg-white text-purple-800 hover:bg-gray-100 shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 transition-all"
+                  onClick={() => {
+                    console.log('Home: Try AI Search button clicked');
+                    setAiMode(true);
+                    console.log('Home: setAiMode(true) called');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
                   Try AI Search
                 </Button>
                 <Button 

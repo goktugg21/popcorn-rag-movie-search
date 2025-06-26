@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 /**
  * SearchBar component for searching movies with two modes:
@@ -8,9 +8,11 @@ import React, { useState } from 'react';
  * @param {Object} props - Component props
  * @param {Function} props.onSearch - Function called when keyword search is submitted
  * @param {Function} props.onAiSearch - Function called when AI search is submitted
+ * @param {boolean} props.initialAiMode - Initial AI mode state (optional)
+ * @param {Function} props.onAiModeChange - Callback when AI mode changes (optional)
  */
-const SearchBar = ({ onSearch, onAiSearch }) => {
-  const [isAiMode, setIsAiMode] = useState(false);
+const SearchBar = ({ onSearch, onAiSearch, initialAiMode = false, onAiModeChange }) => {
+  const [isAiMode, setIsAiMode] = useState(initialAiMode);
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   
@@ -19,6 +21,17 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
   const [yearRange, setYearRange] = useState([1900, 2025]);
   const [rating, setRating] = useState('');
   const [director, setDirector] = useState('');
+
+  // Sync internal state with external prop
+  useEffect(() => {
+    console.log('SearchBar: initialAiMode changed to:', initialAiMode);
+    setIsAiMode(initialAiMode);
+  }, [initialAiMode]);
+
+  // Debug current state
+  useEffect(() => {
+    console.log('SearchBar: isAiMode state is now:', isAiMode);
+  }, [isAiMode]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -40,9 +53,15 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
   };
 
   const toggleSearchMode = () => {
-    setIsAiMode(!isAiMode);
+    const newAiMode = !isAiMode;
+    setIsAiMode(newAiMode);
     setQuery('');
     setShowFilters(false);
+    
+    // Call the callback if provided
+    if (onAiModeChange) {
+      onAiModeChange(newAiMode);
+    }
   };
 
   const toggleFilters = () => {
@@ -58,7 +77,10 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
         <div className="inline-flex rounded-md shadow-sm" role="group">
           <button
             type="button"
-            onClick={() => setIsAiMode(false)}
+            onClick={() => {
+              setIsAiMode(false);
+              if (onAiModeChange) onAiModeChange(false);
+            }}
             className={`px-4 py-1 text-sm font-medium rounded-l-lg ${
               !isAiMode 
                 ? 'bg-primary-light text-white dark:bg-primary-dark' 
@@ -69,7 +91,10 @@ const SearchBar = ({ onSearch, onAiSearch }) => {
           </button>
           <button
             type="button"
-            onClick={() => setIsAiMode(true)}
+            onClick={() => {
+              setIsAiMode(true);
+              if (onAiModeChange) onAiModeChange(true);
+            }}
             className={`px-4 py-1 text-sm font-medium rounded-r-lg ${
               isAiMode 
                 ? 'bg-primary-light text-white dark:bg-primary-dark' 

@@ -4,6 +4,7 @@ import Header from './Header';
 import PinnedSearchBar from './PinnedSearchBar';
 import Footer from './Footer';
 import useDarkMode from '../hooks/useDarkMode';
+import { useSearchBar } from '../contexts/SearchBarContext';
 
 /**
  * Main layout component with responsive header, search bar and content area
@@ -13,6 +14,10 @@ import useDarkMode from '../hooks/useDarkMode';
 const Layout = ({ children }) => {
   const [isDarkMode, toggleDarkMode] = useDarkMode();
   const location = useLocation();
+  const { aiMode, setAiMode } = useSearchBar();
+  
+  // Debug the context values
+  console.log('Layout: aiMode from context:', aiMode);
   
   // Only show PinnedSearchBar on the home page
   const showSearchBar = location.pathname === '/';
@@ -28,7 +33,10 @@ const Layout = ({ children }) => {
       {/* Pinned Search Bar - Only show on home page */}
       {showSearchBar && (
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8">
-          <PinnedSearchBar />
+          <PinnedSearchBar 
+            initialAiMode={aiMode}
+            onAiModeChange={setAiMode}
+          />
         </div>
       )}
 
