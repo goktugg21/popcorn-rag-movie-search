@@ -26,6 +26,8 @@ const TitleManager = () => {
         title = `Movie Details | ${title}`;
       } else if (location.pathname === '/search') {
         title = `Search Results | ${title}`;
+      } else if (location.pathname === '/how-it-works') {
+        title = `How It Works | ${title}`;
       } else if (location.pathname === '/tropes') {
         title = `Character Tropes | ${title}`;
       } else if (location.pathname === '/user') {
@@ -45,6 +47,7 @@ const TitleManager = () => {
 
 // Lazy load all page components with specific loading skeletons
 const Home = lazy(() => import('./pages/Home'));
+const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const MovieDetail = lazy(() => import('./pages/MovieDetail'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const Tropes = lazy(() => import('./pages/Tropes'));
@@ -65,6 +68,11 @@ function App() {
               <Route path="/" element={
                 <Suspense fallback={<HomeSkeleton />}>
                   <Home />
+                </Suspense>
+              } />
+              <Route path="/how-it-works" element={
+                <Suspense fallback={<HomeSkeleton />}>
+                  <HowItWorks />
                 </Suspense>
               } />
               <Route path="/movie/:id" element={

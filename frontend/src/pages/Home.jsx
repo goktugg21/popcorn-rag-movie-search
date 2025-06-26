@@ -17,7 +17,7 @@ const Home = () => {
     { id: 1, name: 'Action', icon: '🔥', color: 'from-red-500 to-orange-500' },
     { id: 2, name: 'Drama', icon: '🎭', color: 'from-blue-500 to-purple-500' },
     { id: 3, name: 'Comedy', icon: '😂', color: 'from-green-500 to-teal-500' },
-    { id: 4, name: 'Sci-Fi', icon: '🚀', color: 'from-indigo-500 to-blue-500' },
+    { id: 4, name: 'Science Fiction', icon: '🚀', color: 'from-indigo-500 to-blue-500' },
     { id: 5, name: 'Horror', icon: '👻', color: 'from-purple-500 to-pink-500' },
     { id: 6, name: 'Romance', icon: '💕', color: 'from-pink-500 to-rose-500' },
   ]);
@@ -145,6 +145,10 @@ const Home = () => {
               <Button 
                 variant="primary" 
                 className="text-lg py-3 px-8 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
+                onClick={() => {
+                  navigate(`/search?rating=8`);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 <span className="flex items-center">
                   <span>Explore Movies</span>
@@ -156,6 +160,10 @@ const Home = () => {
               <Button 
                 variant="secondary" 
                 className="text-lg py-3 px-8 border border-white/30 bg-white/10 text-white hover:bg-white/20"
+                onClick={() => {
+                  navigate('/how-it-works');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 How It Works
               </Button>
@@ -193,7 +201,10 @@ const Home = () => {
               <div 
                 key={category.id} 
                 className="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer overflow-hidden group"
-                onClick={() => navigate(`/search?genre=${encodeURIComponent(category.name)}`)}
+                onClick={() => {
+                  navigate(`/search?genre=${encodeURIComponent(category.name)}`);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 <div className={`bg-gradient-to-br ${category.color} p-6 text-center h-full flex flex-col items-center justify-center`}>
                   <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.icon}</div>
@@ -302,7 +313,12 @@ const Home = () => {
                 </Button>
                 <Button 
                   variant="secondary" 
-                  className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20">
+                  className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20"
+                  onClick={() => {
+                    navigate('/how-it-works');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
                   Learn More
                 </Button>
               </div>
@@ -410,13 +426,20 @@ const Home = () => {
               <Button 
                 variant="primary" 
                 className="text-lg py-3 px-8 bg-white text-blue-600 hover:bg-blue-50 shadow-xl"
-                onClick={() => navigate('/signup')}
+                onClick={() => {
+                  navigate('/signup');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 Sign Up for Free
               </Button>
               <Button 
                 variant="secondary" 
                 className="text-lg py-3 px-8 bg-transparent border border-white text-white hover:bg-white/10"
+                onClick={() => {
+                  navigate('/how-it-works');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 Learn More
               </Button>

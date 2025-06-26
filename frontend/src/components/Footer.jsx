@@ -4,7 +4,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-gray-900 text-gray-300 pt-16 pb-8">
+    <footer className="bg-gray-900 text-gray-300 pt-16 pb-8 ">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand and Description */}
@@ -34,46 +34,15 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold text-white mb-4">Quick Links</h4>
+            <h4 className="text-lg font-semibold text-white mb-3">Quick Links</h4>
             <ul className="space-y-2">
               <li><a href="/" className="text-gray-400 hover:text-white transition-colors">Home</a></li>
-              <li><a href="/movies" className="text-gray-400 hover:text-white transition-colors">Explore Movies</a></li>
-              <li><a href="/favorites" className="text-gray-400 hover:text-white transition-colors">Your Favorites</a></li>
-              <li><a href="/categories" className="text-gray-400 hover:text-white transition-colors">Categories</a></li>
+              <li><a href="/search?rating=8" className="text-gray-400 hover:text-white transition-colors">Explore Movies</a></li>
+              <li><a href="/user" className="text-gray-400 hover:text-white transition-colors">Your Favorites</a></li>
             </ul>
           </div>
 
-          {/* Resources */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-4">Resources</h4>
-            <ul className="space-y-2">
-              <li><a href="/about" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-              <li><a href="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-              <li><a href="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</a></li>
-              <li><a href="/support" className="text-gray-400 hover:text-white transition-colors">Support</a></li>
-            </ul>
-          </div>
-
-          {/* Subscribe */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-4">Stay Updated</h4>
-            <p className="text-gray-400 mb-4">Subscribe to our newsletter for the latest updates and movie recommendations.</p>
-            <form className="flex">
-              <input 
-                type="email" 
-                placeholder="Your email" 
-                className="bg-gray-800 text-white px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-              />
-              <button 
-                type="submit" 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-md transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            </form>
-          </div>
+         
         </div>
         
         <div className="border-t border-gray-800 mt-12 pt-8">
@@ -81,9 +50,7 @@ const Footer = () => {
             <p>&copy; {currentYear} Popcorn not included. All rights reserved.</p>
             <div className="mt-4 md:mt-0">
               <ul className="flex flex-wrap space-x-4">
-                <li><a href="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">Terms</a></li>
-                <li><a href="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">Privacy</a></li>
-                <li><a href="/cookies" className="text-gray-400 hover:text-white transition-colors text-sm">Cookies</a></li>
+
               </ul>
             </div>
           </div>
