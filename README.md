@@ -2,10 +2,12 @@
 
 **A movie discovery web app that combines a local-LLM "ask me anything" movie chat (RAG over pgvector) with precise structured filters, community character tropes and personal favourites.**
 
-<!-- Screenshots: replace the placeholders below -->
+<!--
+Screenshots: add images to docs/screenshots/ and uncomment this table.
 | Home | AI movie chat | Filters & results |
 |---|---|---|
 | ![Home page](docs/screenshots/home.png) | ![AI chat](docs/screenshots/chat.png) | ![Filters](docs/screenshots/filters.png) |
+-->
 
 ## Features
 
