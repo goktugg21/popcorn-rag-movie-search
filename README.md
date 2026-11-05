@@ -1,161 +1,98 @@
+# Popcorn Not Included
 
+**A movie discovery web app that combines a local-LLM "ask me anything" movie chat (RAG over pgvector) with precise structured filters, community character tropes and personal favourites.**
 
-# Structure
-Models <- Create models for sqlalchemy
-- To create a new model create a new python file and import it into \_\_init\_\_.py 
+<!-- Screenshots: replace the placeholders below -->
+| Home | AI movie chat | Filters & results |
+|---|---|---|
+| ![Home page](docs/screenshots/home.png) | ![AI chat](docs/screenshots/chat.png) | ![Filters](docs/screenshots/filters.png) |
 
-Test <- All the tests here, don't forget functions start with test_
+## Features
 
-utils <- Function needed that are not reoutes
+- **AI movie chat (RAG):** describe what you feel like watching in natural language. Movie descriptions are embedded with `nomic-embed-text`, stored in PostgreSQL + pgvector, retrieved with LlamaIndex and answered by a local `mistral-nemo` model through Ollama. No paid API, and everything runs locally.
+- **Structured search:** filter by genre, release year, director, rating and keywords, or combine them all in one query (SQL-backed, sorted by rating).
+- **Character tropes:** users can tag movies with character tropes and browse movies by trope.
+- **Accounts & favourites:** register/login with JWT-based sessions, save favourites, delete account.
+- **React frontend:** Vite + React 19 + Tailwind, with dark mode, skeleton loaders, pagination and a pinned search bar.
+- **Tested backend:** pytest suites for filters, movies, users, tropes and RAG.
 
-app.py <- main file, from here you start the app and add new routes
+## Architecture
 
-.env <- Environmental variables are stored here \
-Create .env from .env_example and complete the variables
+```mermaid
+flowchart LR
+    U[User] --> FE["React frontend<br/>(Vite, Tailwind)"]
+    FE -- REST/JSON --> API["Flask API<br/>app.py"]
 
-# How to run backend
-1. Download and start docker(or you can use docker desktop):
-- https://docs.docker.com/engine/install/
-- https://www.docker.com/products/docker-desktop/
-2. Download and start pgvector container with the following command:
-```sh
-docker run -e POSTGRES_USER=myuser \
-           -e POSTGRES_PASSWORD=mypassword \
-           -e POSTGRES_DB=mydatabase \
-           --name my_postgres \
-           -p 5432:5432 \
-           -d ankane/pgvector
+    subgraph Backend
+        API --> AUTH["Auth & favourites<br/>/register /login /add_favourite"]
+        API --> FILT["Structured filters<br/>regular_filter_search.py"]
+        API --> TROPE["Character tropes<br/>tropes.py"]
+        API --> RAG["RAG chat /chat<br/>rag_tools.py (LlamaIndex)"]
+    end
+
+    AUTH --> DB[("PostgreSQL + pgvector<br/>movies, users, favourites,<br/>768-d embeddings")]
+    FILT --> DB
+    TROPE --> DB
+    RAG -- vector search --> DB
+    RAG -- embed query --> EMB["Ollama<br/>nomic-embed-text"]
+    RAG -- generate answer --> LLM["Ollama<br/>mistral-nemo"]
 ```
-3. Download ollama:
-- https://ollama.com/download
-4. Download 2 models with ollama
-```sh
-ollama pull mistral-nemo:latest
-ollama pull nomic-embed-text:latest
-```
-5. Create .env file from .env_example
-6. Complete the .env
-7. Move to the backend folder
-```sh
-cd ./backend
-```
-8. Install requirements 
-```sh
-pip install -r ./requirements.txt
-``` 
 
-9. Start the application
-```sh
-python app.py
-```
-10. Run tests
-```sh
-pytest
-```
-# Team
-Antonia Bulai - 2837920 \
-David-Valentin Neacsu - 2840781 \
-Laetitia Maria Rossetti - 2839652 \
-Goktug Yildirim - 2814081
+## How to run
 
-# API endpoints
-#### POST /register
-- Description: Registers a new user with a username and password.
+**Prerequisites:** Docker, [Ollama](https://ollama.com/download), Python 3.10+, Node 18+.
 
- - Body:
+1. Start PostgreSQL with pgvector:
+   ```sh
+   docker run -e POSTGRES_USER=myuser \
+              -e POSTGRES_PASSWORD=mypassword \
+              -e POSTGRES_DB=mydatabase \
+              --name my_postgres -p 5432:5432 -d ankane/pgvector
+   ```
+2. Pull the local models:
+   ```sh
+   ollama pull mistral-nemo:latest
+   ollama pull nomic-embed-text:latest
+   ```
+3. Configure the environment: copy `.env_example` to `.env` and fill in the values.
+4. Run the backend:
+   ```sh
+   cd backend
+   pip install -r requirements.txt
+   python app.py
+   ```
+5. Run the frontend (in a second terminal):
+   ```sh
+   cd frontend
+   npm install
+   npm run dev
+   ```
+6. Run the tests:
+   ```sh
+   cd backend
+   pytest
+   ```
 
-    - username (str) – Required.
+## Results
 
-    - password (str) – Required.
+| Metric | Baseline (vector search) | + Cross-encoder reranking |
+|---|---|---|
+| Top-1 retrieval accuracy | 50% | **76%** |
 
-#### POST /login
-- Description: Logs in an existing user and returns a session token.
+## Tech stack
 
-- Body:
+**Backend:** Python, Flask, SQLAlchemy, PostgreSQL, pgvector, LlamaIndex, Ollama (mistral-nemo, nomic-embed-text), PyJWT, pytest
+**Frontend:** React 19, Vite, Tailwind CSS, React Router, Framer Motion
 
-    - username (str) – Required.
+## Team
 
-    - password (str) – Required.
+Team project for **Applied Programming for AI**, VU Amsterdam (**2025**).
+Team: Antonia Bulai, David-Valentin Neacșu, Laetitia Maria Rossetti, Goktug Yildirim.
 
-####  GET /logout
-- Description: Logs out the user by clearing the session token cookie.
+**My contributions:** I built the structured movie-filtering backend (genre, year, director, rating and keyword filters, later migrated from CSV to SQL with a combined-filter query), wrote its test suite, built a React frontend prototype (home, search, auth and favourites pages), and helped shape the concept during brainstorming.
 
-#### POST /delete_account
-- Description: Deletes the user’s account and all associated favorites.
+This repository is a copy of the original course repository with full commit history. Secrets were removed from history before publishing.
 
-- Body:
+## License
 
-    - username (str) – Required.
-
-- password (str) – Required.
-
-
-#### POST /chat
-- Description: Performs an AI-assisted search and returns two matching movies and a generated AI response.
-
-- Body:
-
-    -query (str) – Required. Free-text question or query about movies.
-
-#### GET /movie
-- Description: Fetches a movie's details by either internal ID or IMDb ID.
-
-- Params:
-
-    - id (str) – Optional.
-
-    - imdb_id (str) – Optional.
-
-- You must provide either id or imdb_id.
-
-#### POST /search
-- Description: Searches for movies using a combination of filters.
-
-- Body:
-
-    - query (str) – Required.
-
-    - keyword (list[str]) – Optional.
-
-    - genres (list[str]) – Optional.
-
-    - year (list[int]) – Optional; expected as an interval (e.g., [2000, 2010]).
-
-    - director (list[str]) – Optional.
-
-- rating (float) – Optional.
-
-#### POST /add_favorite
-- Description: Adds a movie to the logged-in user’s list of favorites.
-
-- Body:
-
-    - movie_id (str) – Required.
-
-#### POST /delete_favorite
-- Description: Removes a movie from the user’s favorites.
-
-- Body:
-
-    - movie_id (str) – Required.
-
-#### POST /add_trope
-- Description: Adds a user-submitted character trope to a specific movie.
-
-- Body:
-
-    - selected_movie_id (str) – Required.
-
-    - user_trope (str) – Required.
-
-#### GET /trope_filter
-- Description: Retrieves all movies with user-submitted tropes, organized for filtering.
-
-GET /movies_with_trope
-- Description: Lists movies that contain a specific user-defined trope.
-
-- Body:
-
-    - user_trope (str) 
-    - Required.
-
+[MIT](LICENSE)
