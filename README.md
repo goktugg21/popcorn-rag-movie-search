@@ -75,11 +75,9 @@ flowchart LR
    pytest
    ```
 
-## Results
+## Follow-up experiment (personal, after the course)
 
-| Metric | Baseline (vector search) | + Cross-encoder reranking |
-|---|---|---|
-| Top-1 retrieval accuracy | 50% | **76%** |
+A separate personal experiment on the branch `goktug/rerank-experiment` ([write-up](https://github.com/yildirimgoktug/popcorn-rag-movie-search/tree/goktug/rerank-experiment/experiments/rerank)) added a cross-encoder reranking stage: top-1 retrieval rose from 36% to 80% on 50 title-free plot queries (exact McNemar p ≈ 1e-5), at about 1.3 s extra per query on a laptop CPU. It uses a different embedding model than the app and LLM-written queries; see the limitations in the write-up.
 
 ## Tech stack
 
