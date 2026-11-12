@@ -1,0 +1,6 @@
+# Large / regenerable artefacts: never commit
+cache/
+.hf_cache/
+logs/
+*.npy
+__pycache__/

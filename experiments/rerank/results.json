@@ -1,0 +1,530 @@
+{
+  "n_queries": 50,
+  "n_documents": 10862,
+  "rerank_depth": 30,
+  "models": {
+    "bi_encoder": "BAAI/bge-small-en-v1.5",
+    "bi_encoder_revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "query_instruction": "Represent this sentence for searching relevant passages: ",
+    "cross_encoder": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "cross_encoder_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+    "max_seq_length": 512
+  },
+  "baseline": {
+    "top1": 0.36,
+    "top2": 0.5,
+    "top5": 0.66,
+    "mrr@30": 0.4839785436785435,
+    "recall@30": 0.86
+  },
+  "rerank": {
+    "top1": 0.8,
+    "top2": 0.82,
+    "top5": 0.86,
+    "mrr@30": 0.8216666666666665,
+    "recall@30": 0.86
+  },
+  "top1_comparison": {
+    "improved": 24,
+    "worsened": 2,
+    "unchanged_both_correct": 16,
+    "unchanged_both_wrong": 8,
+    "exact_mcnemar_p_two_sided": 1.049041748046875e-05,
+    "accuracy_difference": 0.44,
+    "bootstrap_95ci_difference": [
+      0.28,
+      0.6
+    ],
+    "bootstrap_samples": 10000
+  },
+  "rank_comparison_within_top30": {
+    "n_targets_in_top30": 43,
+    "rank_better": 25,
+    "rank_worse": 2,
+    "rank_same": 16,
+    "sign_test_p_two_sided": 5.647540092468262e-06
+  },
+  "latency_ms_mean": {
+    "query_embed_plus_exact_search": 19.193424000186496,
+    "cross_encoder_rerank_30": 1323.4452580003563,
+    "total_with_rerank": 1342.6386820005428
+  },
+  "latency_ms_median": {
+    "query_embed_plus_exact_search": 18.873750002967427,
+    "cross_encoder_rerank_30": 1359.25270000007
+  },
+  "environment": {
+    "python": "3.10.11",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "cpu_count": 16,
+    "torch": "2.14.1+cpu",
+    "torch_threads": 12,
+    "sentence_transformers": "6.3.0",
+    "numpy": "2.2.6"
+  },
+  "index": {
+    "bi_encoder": "BAAI/bge-small-en-v1.5",
+    "bi_encoder_revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "n_docs": 10862,
+    "dim": 384,
+    "max_seq_length": 512,
+    "token_length_median": 259,
+    "token_length_max": 617,
+    "n_docs_truncated": 128,
+    "encode_seconds": 526.4,
+    "torch_threads": 12
+  },
+  "per_query": [
+    {
+      "target_id": 6877,
+      "title": "Failure to Launch",
+      "query": "A guy over thirty who has never moved out of his mom and dad's house, like his buddies, finds out his parents have quietly paid a professional to get him to finally leave home.",
+      "baseline_rank": 5,
+      "rerank_rank": 1,
+      "baseline_top1": "Jeff, Who Lives at Home",
+      "rerank_top1": "Failure to Launch"
+    },
+    {
+      "target_id": 576,
+      "title": "The Wild Bunch",
+      "query": "An ageing band of outlaws plans one last job before quitting, but the robbery is a trap partly set up by a former companion, who then chases them south into Mexico, ending in bloody shootouts.",
+      "baseline_rank": 65,
+      "rerank_rank": null,
+      "baseline_top1": "American Outlaws",
+      "rerank_top1": "Tough Guys"
+    },
+    {
+      "target_id": 13374,
+      "title": "Ice Princess",
+      "query": "A teenage girl, backed by her trainer, her family and the guy who drives the ice-resurfacing machine, pushes herself to become a top competitive skater.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Ice Princess",
+      "rerank_top1": "Ice Princess"
+    },
+    {
+      "target_id": 11683,
+      "title": "Land of the Dead",
+      "query": "In a world overrun by the undead, the last humans live inside a fortified town where the rich sit in high-rise towers while everyone else struggles, and the zombies are getting smarter and trying to get in.",
+      "baseline_rank": 1,
+      "rerank_rank": 4,
+      "baseline_top1": "Land of the Dead",
+      "rerank_top1": "Rise of the Zombies"
+    },
+    {
+      "target_id": 11101,
+      "title": "Stalingrad",
+      "query": "A unit of German soldiers in the brutal WWII siege on the Volga loses half its men, suffers under a cruel officer, and then deserts, trying to slip out of the encircled city as Soviet forces close in.",
+      "baseline_rank": 1,
+      "rerank_rank": 2,
+      "baseline_top1": "Stalingrad",
+      "rerank_top1": "Ð¡Ñ‚Ð°Ð»Ð¸Ð½Ð³Ñ€Ð°Ð´"
+    },
+    {
+      "target_id": 9208,
+      "title": "Broken Arrow",
+      "query": "A renegade air force pilot disappears during a training flight and steals two atomic bombs, and his former flying partner teams up with a park ranger to chase him across the Utah canyons and get them back.",
+      "baseline_rank": 2,
+      "rerank_rank": 1,
+      "baseline_top1": "2001: A Space Travesty",
+      "rerank_top1": "Broken Arrow"
+    },
+    {
+      "target_id": 5072,
+      "title": "Severance",
+      "query": "Employees of a weapons company go on a corporate team-bonding trip in Europe, have to walk the last stretch through a forest after the road is blocked, and are hunted down one by one by a deranged murderer.",
+      "baseline_rank": 26,
+      "rerank_rank": 1,
+      "baseline_top1": "The Hunted",
+      "rerank_top1": "Severance"
+    },
+    {
+      "target_id": 2768,
+      "title": "American Gigolo",
+      "query": "A male escort in LA who sleeps with wealthy older women gets involved with a politician's wife, then becomes a suspect when a woman who paid for his company is murdered and realizes someone is setting him up.",
+      "baseline_rank": 5,
+      "rerank_rank": 1,
+      "baseline_top1": "The Escort",
+      "rerank_top1": "American Gigolo"
+    },
+    {
+      "target_id": 113947,
+      "title": "The Sessions",
+      "query": "A poet and journalist who spends most of his life in an iron lung because of polio decides he wants to have sex for the first time and hires a professional surrogate to make it happen.",
+      "baseline_rank": 28,
+      "rerank_rank": 1,
+      "baseline_top1": "Romance & Cigarettes",
+      "rerank_top1": "The Sessions"
+    },
+    {
+      "target_id": 667,
+      "title": "You Only Live Twice",
+      "query": "A British secret agent goes to Japan to find out who is hijacking Soviet and American spacecraft in orbit and pushing the superpowers toward war, and comes face to face with his long-time nemesis.",
+      "baseline_rank": 41,
+      "rerank_rank": null,
+      "baseline_top1": "The Fourth Protocol",
+      "rerank_top1": "Ice Station Zebra"
+    },
+    {
+      "target_id": 639,
+      "title": "When Harry Met Sally...",
+      "query": "Two people who share a long drive to Manhattan and argue about whether men and women can ever be just friends without sex getting in the way; the question keeps following them for more than a decade.",
+      "baseline_rank": 2,
+      "rerank_rank": 1,
+      "baseline_top1": "If These Walls Could Talk 2",
+      "rerank_top1": "When Harry Met Sally..."
+    },
+    {
+      "target_id": 4105,
+      "title": "Black Rain",
+      "query": "Two New York police detectives have to escort a captured Japanese gangster back to Japan, but he escapes, and they must learn to work by local rules to catch him in the middle of a war between crime syndicates.",
+      "baseline_rank": 24,
+      "rerank_rank": 1,
+      "baseline_top1": "Across 110th Street",
+      "rerank_top1": "Black Rain"
+    },
+    {
+      "target_id": 11023,
+      "title": "Thirteen",
+      "query": "A seventh-grade girl befriends the coolest girl in her school and quickly spirals into drugs, sex and petty crime, damaging her relationship with her mother and her old friends.",
+      "baseline_rank": 11,
+      "rerank_rank": 1,
+      "baseline_top1": "2.0:37",
+      "rerank_top1": "Thirteen"
+    },
+    {
+      "target_id": 11364,
+      "title": "Regarding Henry",
+      "query": "After being shot, a hard-nosed lawyer loses his memory and has to relearn how to talk and walk, with his wife and young daughter helping him rebuild an existence that no longer feels like his.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Regarding Henry",
+      "rerank_top1": "Regarding Henry"
+    },
+    {
+      "target_id": 592,
+      "title": "The Conversation",
+      "query": "A secretive audio surveillance specialist records a young couple talking in a busy San Francisco plaza for a shadowy client, then becomes consumed by the tape, afraid the pair are going to be killed.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "The Conversation",
+      "rerank_top1": "The Conversation"
+    },
+    {
+      "target_id": 10502,
+      "title": "The Man Without a Face",
+      "query": "A scarred recluse, once a teacher who was convicted after a car crash and fire killed a boy, starts tutoring a troubled kid, and the small town grows suspicious and hostile toward their friendship.",
+      "baseline_rank": 13,
+      "rerank_rank": 1,
+      "baseline_top1": "Deadly Friend",
+      "rerank_top1": "The Man Without a Face"
+    },
+    {
+      "target_id": 109418,
+      "title": "Grown Ups 2",
+      "query": "A group of middle-aged buddies who moved back to their hometown get taught a few lessons by their own children over a chaotic final day of the school year, in an ensemble comedy sequel.",
+      "baseline_rank": 2,
+      "rerank_rank": 1,
+      "baseline_top1": "Friends with Kids",
+      "rerank_top1": "Grown Ups 2"
+    },
+    {
+      "target_id": 11050,
+      "title": "Terms of Endearment",
+      "query": "Over many years, a prickly mother and her daughter clash and love each other through the daughter's marriage and family life, while the mother starts a fling with the ex-astronaut who lives next door.",
+      "baseline_rank": 2,
+      "rerank_rank": 1,
+      "baseline_top1": "The Astronaut's Wife",
+      "rerank_top1": "Terms of Endearment"
+    },
+    {
+      "target_id": 200505,
+      "title": "Draft Day",
+      "query": "A pro football team's general manager trades for the first overall pick and has to make a career-defining choice during the single hectic day when teams select new college players.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Draft Day",
+      "rerank_top1": "Draft Day"
+    },
+    {
+      "target_id": 13497,
+      "title": "Drumline",
+      "query": "A gifted young drummer from New York gets into a college in the South and expects to dominate its marching band's percussion section, but learns that skill alone won't make him a leader.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Drumline",
+      "rerank_top1": "Drumline"
+    },
+    {
+      "target_id": 142,
+      "title": "Brokeback Mountain",
+      "query": "Two young ranch hands herding sheep together in the mountains in the 1960s fall into a secret love affair that lasts decades and clashes with the marriages and lives they are expected to have.",
+      "baseline_rank": 25,
+      "rerank_rank": 1,
+      "baseline_top1": "The Misfits",
+      "rerank_top1": "Brokeback Mountain"
+    },
+    {
+      "target_id": 9603,
+      "title": "Clueless",
+      "query": "A spoiled, popular rich girl at a Beverly Hills school plays matchmaker for two teachers, then gives a clumsy new classmate a makeover, gets upstaged by her, and realizes she has feelings for her ex-stepbrother.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Clueless",
+      "rerank_top1": "Clueless"
+    },
+    {
+      "target_id": 115283,
+      "title": "A.C.O.D.",
+      "query": "An adult son still stuck in the middle of his parents' endless divorce feud learns he was secretly a subject in a research study on children of divorce, and a new follow-up study throws his family into chaos again.",
+      "baseline_rank": 5,
+      "rerank_rank": 1,
+      "baseline_top1": "Life as a House",
+      "rerank_top1": "A.C.O.D."
+    },
+    {
+      "target_id": 28302,
+      "title": "The Swan Princess: The Mystery of the Enchanted Kingdom",
+      "query": "An animated royal couple face a wicked sorceress who wants a forbidden magical treasure for ultimate power; she kidnaps the wife, and her husband sets off with his animal companions to save her.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "The Swan Princess: The Mystery of the Enchanted Kingdom",
+      "rerank_top1": "The Swan Princess: The Mystery of the Enchanted Kingdom"
+    },
+    {
+      "target_id": 13491,
+      "title": "Arn: Tempelriddaren",
+      "query": "A Swedish nobleman's boy is raised by monks and shipped off to the Crusades as a Templar knight as punishment for a love affair the church will not allow.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Arn: Tempelriddaren",
+      "rerank_top1": "Arn: Tempelriddaren"
+    },
+    {
+      "target_id": 9533,
+      "title": "Red Dragon",
+      "query": "A retired FBI profiler who barely survived catching an imprisoned cannibal psychiatrist has to consult him again to hunt a fresh serial murderer.",
+      "baseline_rank": 22,
+      "rerank_rank": 3,
+      "baseline_top1": "Mindhunters",
+      "rerank_top1": "Blood Work"
+    },
+    {
+      "target_id": 10946,
+      "title": "Earth",
+      "query": "A nature documentary, built partly from footage of a famous BBC television series, following three endangered animal families on long journeys around the globe.",
+      "baseline_rank": 2,
+      "rerank_rank": 1,
+      "baseline_top1": "Life",
+      "rerank_top1": "Earth"
+    },
+    {
+      "target_id": 26035,
+      "title": "According to Greta",
+      "query": "A young waitress has a summer romance with a driven cook from the same kitchen, while her grandparents worry about his criminal record.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "According to Greta",
+      "rerank_top1": "According to Greta"
+    },
+    {
+      "target_id": 4995,
+      "title": "Boogie Nights",
+      "query": "In the late-1970s disco era, an adult film director discovers a young nightclub kitchen worker and turns him into a famous porn star, but drugs and excess eventually bring the whole crew crashing down.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Boogie Nights",
+      "rerank_top1": "Boogie Nights"
+    },
+    {
+      "target_id": 3784,
+      "title": "Frankie and Johnny",
+      "query": "A former convict is hired to work the grill at a Manhattan diner and falls for a guarded waitress who rejects him at first but slowly agrees to give him a chance.",
+      "baseline_rank": 9,
+      "rerank_rank": 1,
+      "baseline_top1": "Diner",
+      "rerank_top1": "Frankie and Johnny"
+    },
+    {
+      "target_id": 55931,
+      "title": "The Animatrix",
+      "query": "An anthology of animated shorts by Japanese anime directors that fills in the backstory of the war between humans and machines from a famous sci-fi movie trilogy.",
+      "baseline_rank": 4,
+      "rerank_rank": 1,
+      "baseline_top1": "ã‚¢ãƒƒãƒ—ãƒ«ã‚·ãƒ¼ãƒ‰",
+      "rerank_top1": "The Animatrix"
+    },
+    {
+      "target_id": 4478,
+      "title": "Indecent Proposal",
+      "query": "A billionaire offers a struggling married man a million dollars to spend one night with his wife.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Indecent Proposal",
+      "rerank_top1": "Indecent Proposal"
+    },
+    {
+      "target_id": 41411,
+      "title": "La Rafle",
+      "query": "An eleven-year-old Jewish boy in Nazi-occupied Paris has to wear the yellow star to school and lives among neighbors both kind and cruel, until the French police mass arrests of Jewish families in the summer of 1942 tear his world apart.",
+      "baseline_rank": 4,
+      "rerank_rank": 1,
+      "baseline_top1": "Faubourg 36",
+      "rerank_top1": "La Rafle"
+    },
+    {
+      "target_id": 34016,
+      "title": "She's Out of My League",
+      "query": "An insecure, average-looking airport security worker can't believe it when a stunning woman starts dating him, and he scrambles to keep her while everyone around him predicts it won't last.",
+      "baseline_rank": 9,
+      "rerank_rank": 1,
+      "baseline_top1": "Unlawful Entry",
+      "rerank_top1": "She's Out of My League"
+    },
+    {
+      "target_id": 12572,
+      "title": "New York, I Love You",
+      "query": "An anthology of about ten short romantic stories set across Manhattan, including a pickpocket, an Orthodox Jewish bride-to-be, a teen taking a wheelchair-using girl to prom, and an old couple on an anniversary stroll.",
+      "baseline_rank": 36,
+      "rerank_rank": null,
+      "baseline_top1": "New York Stories",
+      "rerank_top1": "Loosies"
+    },
+    {
+      "target_id": 881,
+      "title": "A Few Good Men",
+      "query": "Navy lawyers defending two Marines accused of killing a fellow serviceman at a base uncover a brutal disciplinary hazing practice that may implicate the base's commanding colonel.",
+      "baseline_rank": 3,
+      "rerank_rank": 1,
+      "baseline_top1": "In Harm's Way",
+      "rerank_top1": "A Few Good Men"
+    },
+    {
+      "target_id": 228326,
+      "title": "The Book of Life",
+      "query": "An animated tale about a young man torn between his family's expectations and what he truly wants, who travels through three magical realms and confronts his deepest fears.",
+      "baseline_rank": 71,
+      "rerank_rank": null,
+      "baseline_top1": "The Neverending Story III: Escape from Fantasia",
+      "rerank_top1": "Great Expectations"
+    },
+    {
+      "target_id": 8398,
+      "title": "The Hitcher",
+      "query": "A young couple crossing New Mexico's desert on a stormy night pick up a stranger thumbing for a ride who turns out to be a knife-wielding psychopath; they manage to shove him from the vehicle but he keeps reappearing.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "The Hitcher",
+      "rerank_top1": "The Hitcher"
+    },
+    {
+      "target_id": 54138,
+      "title": "Star Trek Into Darkness",
+      "query": "After a terrorist attack from inside their own space fleet organization, a starship captain leads a hunt for a one-man super-weapon on a hostile planet, testing the loyalty of his crew.",
+      "baseline_rank": 39,
+      "rerank_rank": null,
+      "baseline_top1": "Star Trek: The Motion Picture",
+      "rerank_top1": "Starship Troopers: Invasion"
+    },
+    {
+      "target_id": 2252,
+      "title": "Eastern Promises",
+      "query": "A London midwife finds the diary of a teenage Russian girl who died giving birth, and it connects the baby to a brutal family running the Russian mafia in the city.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Eastern Promises",
+      "rerank_top1": "Eastern Promises"
+    },
+    {
+      "target_id": 14405,
+      "title": "Beverly Hills Chihuahua",
+      "query": "A pampered little lapdog from a rich LA neighborhood gets lost on a trip to Mexico and has to rely on new friends to get home while a dognapper chases her for ransom.",
+      "baseline_rank": 3,
+      "rerank_rank": 1,
+      "baseline_top1": "All Dogs Go to Heaven",
+      "rerank_top1": "Beverly Hills Chihuahua"
+    },
+    {
+      "target_id": 43629,
+      "title": "Doodlebug",
+      "query": "A short film in which a man stalks a tiny insect scurrying around his flat, intending to squash it with his shoe, but as he corners it things take a surreal turn.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Doodlebug",
+      "rerank_top1": "Doodlebug"
+    },
+    {
+      "target_id": 10336,
+      "title": "Spawn",
+      "query": "A government assassin is betrayed and killed by his own agency, then makes a bargain with Satan to return and see his wife, agreeing in exchange to command hell's army against humanity.",
+      "baseline_rank": 338,
+      "rerank_rank": null,
+      "baseline_top1": "Assassins",
+      "rerank_top1": "Point of No Return"
+    },
+    {
+      "target_id": 1931,
+      "title": "Stomp the Yard",
+      "query": "After his younger brother is killed, a troubled LA street dancer avoids juvenile detention by enrolling at a historically black college in Atlanta, where rival fraternities compete for him to win a national step-dancing contest.",
+      "baseline_rank": 2,
+      "rerank_rank": 1,
+      "baseline_top1": "Step Up 2: The Streets",
+      "rerank_top1": "Stomp the Yard"
+    },
+    {
+      "target_id": 935,
+      "title": "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb",
+      "query": "A deranged general triggers a nuclear strike, and politicians and military brass in a war room scramble to halt the end of the world, in a black-and-white Cold War satire.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb",
+      "rerank_top1": "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb"
+    },
+    {
+      "target_id": 11238,
+      "title": "Aladdin and the King of Thieves",
+      "query": "An animated sequel in which a street-smart hero, his princess, his monkey, a flying carpet and a wisecracking genie chase the leader of a legendary gang of robbers.",
+      "baseline_rank": 11,
+      "rerank_rank": 1,
+      "baseline_top1": "Madagascar: Escape 2 Africa",
+      "rerank_top1": "Aladdin and the King of Thieves"
+    },
+    {
+      "target_id": 14136,
+      "title": "The Love Bug",
+      "query": "A small white car that thinks for itself goes from the dealer's lot to the racing circuit, getting its driver out of all kinds of scrapes.",
+      "baseline_rank": 84,
+      "rerank_rank": null,
+      "baseline_top1": "The Car",
+      "rerank_top1": "Top Gear: The Perfect Road Trip"
+    },
+    {
+      "target_id": 2275,
+      "title": "The General's Daughter",
+      "query": "Two army investigators look into the murder of a female captain found dead on a Georgia base and uncover a scandal and a possible cover-up involving her father, a senior army commander.",
+      "baseline_rank": 1,
+      "rerank_rank": 1,
+      "baseline_top1": "The General's Daughter",
+      "rerank_top1": "The General's Daughter"
+    },
+    {
+      "target_id": 11375,
+      "title": "Hollywood Homicide",
+      "query": "Two LA police detectives with side jobs, one selling real estate and the other teaching yoga while trying to become an actor, get handed a big murder case and must choose between the job and their dreams.",
+      "baseline_rank": 2,
+      "rerank_rank": 1,
+      "baseline_top1": "Lakeview Terrace",
+      "rerank_top1": "Hollywood Homicide"
+    },
+    {
+      "target_id": 4958,
+      "title": "The Legend of Bagger Vance",
+      "query": "A once-great golfer, ruined by the First World War and drinking, is coaxed into competing in a tournament meant to save an old girlfriend's struggling golf course, guided by a mysterious caddie.",
+      "baseline_rank": 4,
+      "rerank_rank": 1,
+      "baseline_top1": "Tin Cup",
+      "rerank_top1": "The Legend of Bagger Vance"
+    }
+  ]
+}
